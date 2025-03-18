@@ -36,9 +36,18 @@
         .tab-content {
             display: none;
             height: calc(100vh - 95px); /* Further reduced to account for shorter tabs */
-            width: 70%; /* 100% - (15% * 2) for left and right padding */
+            width: 70%; /* Default width for desktop */
             margin: 0 auto; /* Center the content */
             overflow: hidden; /* Prevent double scrollbars */
+        }
+
+        /* Override for mobile */
+        @media (max-width: 768px) {
+            .tab-content {
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 0 !important;
+            }
         }
 
         .tab-content.active {
@@ -206,6 +215,14 @@
                 iframe.style.height = '100%';
                 iframe.style.border = 'none';
                 iframe.style.display = 'block';
+                iframe.style.maxWidth = '100vw';
+                iframe.style.padding = '0';
+                iframe.style.margin = '0';
+
+                // Add mobile-specific class for styling
+                if (window.innerWidth <= 768) {
+                    iframe.classList.add('mobile-iframe');
+                }
 
                 // Clear the container and add the iframe
                 contentContainer.innerHTML = '';
