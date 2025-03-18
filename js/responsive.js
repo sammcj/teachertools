@@ -57,18 +57,29 @@ function setupCollapsibleSections() {
         header.setAttribute('data-initialized', 'true');
     });
 
-    // Collapse all sections except the first one by default
-    const firstHeader = document.querySelector('.section-header');
-    if (firstHeader) {
-        const allHeaders = Array.from(document.querySelectorAll('.section-header'));
-        allHeaders.slice(1).forEach(header => {
+    // Determine which sections should be expanded by default on mobile
+    const expandedSectionSelectors = [
+        '.class-lists-panel .section-header', // First section (class lists)
+        '.groups-preview-panel .section-header', // Generated groups
+        '.incompatible-panel .section-header' // Incompatible pairs
+    ];
+
+    // Collapse all sections except the ones that should be expanded by default
+    const allHeaders = Array.from(document.querySelectorAll('.section-header'));
+    allHeaders.forEach(header => {
+        // Check if this header should be expanded
+        const shouldBeExpanded = expandedSectionSelectors.some(selector =>
+            header.closest(selector.split(' ')[0]) && header.matches(selector.split(' ')[1])
+        );
+
+        if (!shouldBeExpanded) {
             header.classList.add('collapsed');
             const content = header.nextElementSibling;
             if (content && content.classList.contains('section-content')) {
                 content.classList.add('collapsed');
             }
-        });
-    }
+        }
+    });
 }
 
 /**
