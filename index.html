@@ -3,138 +3,198 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GroupThing - Teacher View</title>
+    <title>Emma's Teacher Tools</title>
     <link rel="stylesheet" href="css/fonts.css">
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/teacher.css">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        /* Inline styles for tabs - will move to CSS file later */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--light-accent-color);
+            background-color: var(--background-color);
+            padding: 0 1rem;
+        }
+
+        .tab {
+            padding: 0.56rem 1.5rem; /* Reduced height by 25% (from 0.75rem to 0.56rem) */
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin-right: 0.5rem;
+            background-color: var(--light-accent-color);
+            color: var(--dark-text-color);
+        }
+
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            height: calc(100vh - 95px); /* Further reduced to account for shorter tabs */
+            width: 70%; /* 100% - (15% * 2) for left and right padding */
+            margin: 0 auto; /* Center the content */
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .welcome-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px var(--shadow);
+            z-index: 10;
+            max-width: 600px;
+            animation: fadeIn 1s ease-out;
+            display: none;
+        }
+
+        .welcome-banner.show {
+            display: block;
+        }
+
+        .welcome-banner h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-banner .close-welcome {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .tools-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .tool-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px var(--shadow);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .tool-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-card p {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .tool-card .btn {
+            display: inline-block;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            overflow: hidden;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Hide welcome banner after first visit */
+        body.visited .welcome-banner {
+            display: none;
+        }
+    </style>
 </head>
-<body style="width: 100%; overflow-x: hidden;">
-    <header>
-        <h1>Emma's Teacher Tools - GroupThing</h1>
-        <div class="header-actions">
-            <button id="export-settings-btn" class="btn secondary">💾 Export Settings</button>
-            <button id="import-settings-btn" class="btn secondary">📂 Import Settings</button>
-            <a href="student.html" class="view-toggle" target="_parent">🎓 Switch to Student View</a>
+<body>
+    <!-- Main header removed to save space -->
+    <div class="header-actions" style="display: flex; justify-content: flex-end; padding: 0.25rem 1rem; background-color: var(--background-color);">
+        <!-- Placeholder for future actions -->
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="groupthing">GroupThing</div>
+        <div class="tab" data-tab="coming-soon">More Tools Coming Soon</div>
+    </div>
+
+    <main style="padding: 0; max-width: 100%; width: 100%;">
+        <!-- Welcome banner removed as requested -->
+
+        <div class="tab-content active" id="groupthing-tab">
+            <iframe src="groupthing.html" title="GroupThing Tool"></iframe>
         </div>
-    </header>
 
-    <main class="teacher-container" style="width: 100%; max-width: none; padding: 1rem;">
-        <section class="class-lists-panel">
-            <h2>Class Lists</h2>
-            <div class="class-list" id="class-list-container">
-                <!-- Class lists will be populated here -->
-            </div>
-            <div class="list-actions">
-                <button id="new-list-btn" class="btn primary">📝 New List</button>
-                <button id="load-sample-btn" class="btn secondary">📚 Load Sample Groups</button>
-                <button id="clear-all-btn" class="btn danger">🗑️ Clear All Data</button>
-            </div>
-        </section>
-
-        <section class="current-list-panel">
-            <div class="list-header">
-                <h2>Current List: <span id="current-list-name">None Selected</span></h2>
-                <select id="list-selector" class="dropdown">
-                    <option value="">Select a list...</option>
-                </select>
-            </div>
-
-            <div class="student-management">
-                <h3>Student Names:</h3>
-                <div class="student-list-container">
-                    <ul id="student-list" class="student-list">
-                        <!-- Student names will be populated here -->
-                    </ul>
+        <div class="tab-content" id="coming-soon-tab">
+            <div class="tools-container">
+                <div class="tool-card">
+                    <h3>Quiz Maker</h3>
+                    <p>Create interactive quizzes for your students.</p>
+                    <span class="btn secondary disabled">Coming Soon</span>
                 </div>
-                <div class="student-controls">
-                    <div class="input-group">
-                        <input type="text" id="new-student-input" placeholder="Enter student name">
-                        <button id="add-student-btn" class="btn secondary">➕ Add</button>
-                    </div>
-                    <button id="remove-student-btn" class="btn danger">➖ Remove Selected</button>
+                <div class="tool-card">
+                    <h3>Classroom Timer</h3>
+                    <p>Set timers for activities and transitions.</p>
+                    <span class="btn secondary disabled">Coming Soon</span>
                 </div>
             </div>
-
-            <div class="group-size-control">
-                <h3>Group Size:</h3>
-                <div class="input-group">
-                    <button id="decrease-size-btn" class="btn">-</button>
-                    <input type="number" id="group-size-input" min="2" max="10" value="4">
-                    <button id="increase-size-btn" class="btn">+</button>
-                </div>
-            </div>
-
-            <button id="generate-groups-btn" class="btn primary large">🔄 Generate Groups</button>
-        </section>
-
-        <section class="incompatible-panel">
-            <h2>Incompatible Pairs</h2>
-            <p class="help-text">Students who cannot be in the same group</p>
-
-            <div class="incompatible-container">
-                <ul id="incompatible-pairs" class="incompatible-list">
-                    <!-- Incompatible pairs will be populated here -->
-                </ul>
-            </div>
-
-            <div class="incompatible-controls">
-                <div class="input-group">
-                    <select id="incompatible-student1" class="dropdown">
-                        <option value="">Select student 1</option>
-                    </select>
-                    <select id="incompatible-student2" class="dropdown">
-                        <option value="">Select student 2</option>
-                    </select>
-                </div>
-                <button id="add-incompatible-btn" class="btn secondary">👥 Add Pair</button>
-                <button id="remove-incompatible-btn" class="btn danger">❌ Remove Selected</button>
-            </div>
-        </section>
-
-        <section class="groups-preview-panel">
-            <h2>Generated Groups</h2>
-            <div id="groups-preview-container" class="groups-preview">
-                <!-- Generated groups preview will be shown here -->
-                <p class="empty-state">No groups generated yet. Use the "Generate Groups" button to create groups.</p>
-            </div>
-        </section>
+        </div>
     </main>
 
-    <!-- Modal for creating/editing class lists -->
-    <div id="list-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2 id="modal-title">Create New Class List</h2>
-            <div class="input-group">
-                <label for="list-name-input">List Name:</label>
-                <input type="text" id="list-name-input" placeholder="e.g., Class 1A">
-            </div>
-            <div class="modal-buttons">
-                <button id="save-list-btn" class="btn primary">💾 Save</button>
-                <button id="cancel-list-btn" class="btn">❌ Cancel</button>
-            </div>
-        </div>
-    </div>
+    <footer>
+        <p>All data is stored <i>locally</i> on your computer. Remember to export your settings if you want to keep them!</p>
+    </footer>
 
-    <!-- Modal for importing settings -->
-    <div id="import-modal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Import Settings</h2>
-            <p class="help-text">Select a GroupThing settings file to import.</p>
-            <div class="input-group">
-                <input type="file" id="import-file-input" accept=".json">
-            </div>
-            <div id="import-error" class="error-message" style="display: none; color: var(--error-color); margin-bottom: 1rem;"></div>
-            <div class="modal-buttons">
-                <button id="confirm-import-btn" class="btn primary">📥 Import</button>
-                <button id="cancel-import-btn" class="btn">❌ Cancel</button>
-            </div>
-        </div>
-    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
 
-    <script src="js/storage.js"></script>
-    <script src="js/common.js"></script>
-    <script src="js/teacher.js"></script>
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+
+                    // Show corresponding content
+                    const tabName = tab.getAttribute('data-tab');
+                    document.getElementById(`${tabName}-tab`).classList.add('active');
+                });
+            });
+
+            // Welcome banner functionality removed as requested
+
+            // Mark as visited to prevent any future welcome banners
+            localStorage.setItem('visited', 'true');
+            document.body.classList.add('visited');
+        });
+    </script>
 </body>
 </html>
