@@ -92,6 +92,28 @@ const GroupThing = {
             groups[groupIndex].push(students[i]);
         }
 
+        // Check for groups with only one student and redistribute
+        const singlePersonGroups = groups.filter(group => group.length === 1);
+
+        if (singlePersonGroups.length > 0) {
+            // For each single-person group
+            for (const singleGroup of singlePersonGroups) {
+                // Find the largest group to take a student from
+                const largestGroupIndex = groups.findIndex(
+                    group => group !== singleGroup && group.length > 1
+                );
+
+                if (largestGroupIndex !== -1) {
+                    // Add the single person to the largest group
+                    groups[largestGroupIndex].push(singleGroup[0]);
+
+                    // Remove the single-person group
+                    const singleGroupIndex = groups.findIndex(group => group === singleGroup);
+                    groups.splice(singleGroupIndex, 1);
+                }
+            }
+        }
+
         return groups;
     },
 
