@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GroupThing - Teacher View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&family=Quicksand:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/teacher.css">
+</head>
+<body>
+    <header>
+        <h1>GroupThing</h1>
+        <a href="student.html" class="view-toggle">Switch to Student View</a>
+    </header>
+
+    <main class="teacher-container">
+        <section class="class-lists-panel">
+            <h2>Class Lists</h2>
+            <div class="class-list" id="class-list-container">
+                <!-- Class lists will be populated here -->
+            </div>
+            <div class="list-actions">
+                <button id="new-list-btn" class="btn primary">+ New List</button>
+                <button id="load-sample-btn" class="btn secondary">Load Sample Groups</button>
+                <button id="clear-all-btn" class="btn danger">Clear All Data</button>
+            </div>
+        </section>
+
+        <section class="current-list-panel">
+            <div class="list-header">
+                <h2>Current List: <span id="current-list-name">None Selected</span></h2>
+                <select id="list-selector" class="dropdown">
+                    <option value="">Select a list...</option>
+                </select>
+            </div>
+
+            <div class="student-management">
+                <h3>Student Names:</h3>
+                <div class="student-list-container">
+                    <ul id="student-list" class="student-list">
+                        <!-- Student names will be populated here -->
+                    </ul>
+                </div>
+                <div class="student-controls">
+                    <div class="input-group">
+                        <input type="text" id="new-student-input" placeholder="Enter student name">
+                        <button id="add-student-btn" class="btn secondary">+ Add</button>
+                    </div>
+                    <button id="remove-student-btn" class="btn danger">- Remove Selected</button>
+                </div>
+            </div>
+
+            <div class="group-size-control">
+                <h3>Group Size:</h3>
+                <div class="input-group">
+                    <button id="decrease-size-btn" class="btn">-</button>
+                    <input type="number" id="group-size-input" min="2" max="10" value="4">
+                    <button id="increase-size-btn" class="btn">+</button>
+                </div>
+            </div>
+
+            <button id="generate-groups-btn" class="btn primary large">Generate Groups</button>
+        </section>
+
+        <section class="blacklist-panel">
+            <h2>Blacklist Pairs</h2>
+            <p class="help-text">Students who cannot be in the same group</p>
+
+            <div class="blacklist-container">
+                <ul id="blacklist-pairs" class="blacklist-list">
+                    <!-- Blacklist pairs will be populated here -->
+                </ul>
+            </div>
+
+            <div class="blacklist-controls">
+                <div class="input-group">
+                    <select id="blacklist-student1" class="dropdown">
+                        <option value="">Select student 1</option>
+                    </select>
+                    <select id="blacklist-student2" class="dropdown">
+                        <option value="">Select student 2</option>
+                    </select>
+                </div>
+                <button id="add-blacklist-btn" class="btn secondary">+ Add Pair</button>
+                <button id="remove-blacklist-btn" class="btn danger">- Remove Selected</button>
+            </div>
+        </section>
+
+        <section class="groups-preview-panel">
+            <h2>Generated Groups</h2>
+            <div id="groups-preview-container" class="groups-preview">
+                <!-- Generated groups preview will be shown here -->
+                <p class="empty-state">No groups generated yet. Use the "Generate Groups" button to create groups.</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>GroupThing - A simple tool for creating random student groups</p>
+    </footer>
+
+    <!-- Modal for creating/editing class lists -->
+    <div id="list-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modal-title">Create New Class List</h2>
+            <div class="input-group">
+                <label for="list-name-input">List Name:</label>
+                <input type="text" id="list-name-input" placeholder="e.g., Class 1A">
+            </div>
+            <div class="modal-buttons">
+                <button id="save-list-btn" class="btn primary">Save</button>
+                <button id="cancel-list-btn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/storage.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/teacher.js"></script>
+</body>
+</html>

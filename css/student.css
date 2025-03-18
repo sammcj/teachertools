@@ -1,0 +1,156 @@
+/* Styles specific to the student view */
+
+.student-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2rem;
+}
+
+.groups-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: center;
+    width: 100%;
+    padding: 1rem;
+}
+
+/* Group bubble styles */
+.group-bubble {
+    border-radius: 50%;
+    padding: 1.5rem;
+    min-width: 200px;
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 8px var(--shadow);
+    transition: all 0.3s ease;
+    color: var(--white);
+    text-align: center;
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+.group-bubble:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px var(--shadow);
+}
+
+/* Group colour assignments */
+.group-bubble:nth-child(8n+1) { background-color: var(--group-color-1); }
+.group-bubble:nth-child(8n+2) { background-color: var(--group-color-2); }
+.group-bubble:nth-child(8n+3) { background-color: var(--group-color-3); }
+.group-bubble:nth-child(8n+4) { background-color: var(--group-color-4); }
+.group-bubble:nth-child(8n+5) { background-color: var(--group-color-5); }
+.group-bubble:nth-child(8n+6) { background-color: var(--group-color-6); }
+.group-bubble:nth-child(8n+7) { background-color: var(--group-color-7); }
+.group-bubble:nth-child(8n+0) { background-color: var(--group-color-8); }
+
+/* Ensure text is readable on all background colours */
+.group-bubble:nth-child(8n+2),
+.group-bubble:nth-child(8n+6) {
+    color: var(--text-color); /* Darker text for lighter backgrounds */
+}
+
+.group-title {
+    font-family: 'Quicksand', sans-serif;
+    font-weight: 500;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.group-members {
+    list-style-type: none;
+    width: 100%;
+}
+
+.group-member {
+    padding: 0.25rem 0;
+    font-size: 1.1rem;
+}
+
+/* Empty state styling */
+.empty-state {
+    background-color: var(--white);
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 5px var(--shadow);
+    text-align: center;
+    max-width: 600px;
+    margin: 2rem auto;
+}
+
+.empty-state p {
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .groups-container {
+        gap: 1rem;
+    }
+
+    .group-bubble {
+        min-width: 150px;
+        min-height: 150px;
+        padding: 1rem;
+    }
+
+    .group-title {
+        font-size: 1.2rem;
+    }
+
+    .group-member {
+        font-size: 0.9rem;
+    }
+}
+
+/* For very small screens */
+@media (max-width: 480px) {
+    .group-bubble {
+        min-width: 120px;
+        min-height: 120px;
+        padding: 0.75rem;
+    }
+}
+
+/* Alternative rectangular layout for many students */
+.rectangular-layout .group-bubble {
+    border-radius: 12px;
+    min-height: auto;
+    width: 250px;
+    padding: 1.5rem;
+}
+
+/* Print styles for classroom display */
+@media print {
+    header, footer, .view-toggle {
+        display: none;
+    }
+
+    body {
+        background-color: white;
+    }
+
+    .group-bubble {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 2px solid #ddd;
+    }
+}

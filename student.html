@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GroupThing - Student View</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&family=Quicksand:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/student.css">
+</head>
+<body>
+    <header>
+        <h1>GroupThing - <span id="class-name">Class Groups</span></h1>
+        <a href="index.html" class="view-toggle">Switch to Teacher View</a>
+    </header>
+
+    <main class="student-container">
+        <div id="groups-container" class="groups-container">
+            <!-- Groups will be displayed here -->
+            <div class="empty-state">
+                <p>No groups have been generated yet.</p>
+                <p>Please ask your teacher to generate groups.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>GroupThing - A simple tool for creating random student groups</p>
+    </footer>
+
+    <script src="js/storage.js"></script>
+    <script src="js/common.js"></script>
+    <script src="js/student.js"></script>
+</body>
+</html>
