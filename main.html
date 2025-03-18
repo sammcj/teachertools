@@ -17,7 +17,7 @@
         }
 
         .tab {
-            padding: 0.75rem 1.5rem;
+            padding: 0.56rem 1.5rem; /* Reduced height by 25% (from 0.75rem to 0.56rem) */
             cursor: pointer;
             border-radius: 8px 8px 0 0;
             font-weight: 600;
@@ -34,7 +34,7 @@
 
         .tab-content {
             display: none;
-            height: calc(100vh - 100px); /* Subtract header, tabs, and footer height (reduced for shorter header/footer) */
+            height: calc(100vh - 95px); /* Further reduced to account for shorter tabs */
             width: 70%; /* 100% - (15% * 2) for left and right padding */
             margin: 0 auto; /* Center the content */
         }
@@ -131,15 +131,13 @@
     </style>
 </head>
 <body>
-    <header>
-        <h1>Emma's Teacher Tools</h1>
-        <div class="header-actions">
-            <!-- Placeholder for future actions -->
-        </div>
-    </header>
+    <!-- Main header removed to save space -->
+    <div class="header-actions" style="display: flex; justify-content: flex-end; padding: 0.25rem 1rem; background-color: var(--background-color);">
+        <!-- Placeholder for future actions -->
+    </div>
 
     <div class="tabs">
-        <div class="tab active" data-tab="groupthing">GroupThing</div>
+        <div class="tab active" data-tab="groupthing">Emma's Teacher Tools - GroupThing</div>
         <div class="tab" data-tab="coming-soon">More Tools Coming Soon</div>
     </div>
 
