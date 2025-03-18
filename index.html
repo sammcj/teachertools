@@ -8,13 +8,17 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/teacher.css">
 </head>
-<body>
+<body style="width: 100%; overflow-x: hidden;">
     <header>
         <h1>GroupThing</h1>
-        <a href="student.html" class="view-toggle">Switch to Student View</a>
+        <div class="header-actions">
+            <button id="export-settings-btn" class="btn secondary">Export Settings</button>
+            <button id="import-settings-btn" class="btn secondary">Import Settings</button>
+            <a href="student.html" class="view-toggle" target="_parent">Switch to Student View</a>
+        </div>
     </header>
 
-    <main class="teacher-container">
+    <main class="teacher-container" style="width: 100%; max-width: none; padding: 1rem;">
         <section class="class-lists-panel">
             <h2>Class Lists</h2>
             <div class="class-list" id="class-list-container">
@@ -112,6 +116,23 @@
             <div class="modal-buttons">
                 <button id="save-list-btn" class="btn primary">Save</button>
                 <button id="cancel-list-btn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for importing settings -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Import Settings</h2>
+            <p class="help-text">Select a GroupThing settings file to import.</p>
+            <div class="input-group">
+                <input type="file" id="import-file-input" accept=".json">
+            </div>
+            <div id="import-error" class="error-message" style="display: none; color: var(--error-color); margin-bottom: 1rem;"></div>
+            <div class="modal-buttons">
+                <button id="confirm-import-btn" class="btn primary">Import</button>
+                <button id="cancel-import-btn" class="btn">Cancel</button>
             </div>
         </div>
     </div>

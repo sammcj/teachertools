@@ -32,6 +32,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearAllBtn = document.getElementById('clear-all-btn');
     const closeModal = document.querySelector('.close-modal');
     const studentViewLink = document.querySelector('.view-toggle');
+    const exportSettingsBtn = document.getElementById('export-settings-btn');
+    const importSettingsBtn = document.getElementById('import-settings-btn');
+    const importModal = document.getElementById('import-modal');
+    const importFileInput = document.getElementById('import-file-input');
+    const confirmImportBtn = document.getElementById('confirm-import-btn');
+    const cancelImportBtn = document.getElementById('cancel-import-btn');
+    const importError = document.getElementById('import-error');
 
     // State variables
     let selectedStudents = [];
@@ -62,6 +69,11 @@ document.addEventListener('DOMContentLoaded', () => {
     generateGroupsBtn.addEventListener('click', generateGroups);
     addBlacklistBtn.addEventListener('click', addBlacklistPair);
     removeBlacklistBtn.addEventListener('click', removeSelectedBlacklistPairs);
+    exportSettingsBtn.addEventListener('click', exportSettings);
+    importSettingsBtn.addEventListener('click', openImportModal);
+    confirmImportBtn.addEventListener('click', importSettings);
+    cancelImportBtn.addEventListener('click', closeImportModal);
+    importModal.querySelector('.close-modal').addEventListener('click', closeImportModal);
 
     /**
      * Initialize the UI with data from storage
@@ -704,5 +716,88 @@ document.addEventListener('DOMContentLoaded', () => {
             // Show success message
             GroupThing.showError('All data has been cleared.', 3000);
         }
+    }
+
+    /**
+     * Export settings to a JSON file
+     */
+    function exportSettings() {
+        try {
+            StorageManager.exportSettings();
+            GroupThing.showError('Settings exported successfully!', 3000);
+        } catch (error) {
+            console.error('Error exporting settings:', error);
+            GroupThing.showError('Error exporting settings. Please try again.');
+        }
+    }
+
+    /**
+     * Open the import settings modal
+     */
+    function openImportModal() {
+        importFileInput.value = '';
+        importError.style.display = 'none';
+        importError.textContent = '';
+        importModal.style.display = 'flex';
+    }
+
+    /**
+     * Close the import settings modal
+     */
+    function closeImportModal() {
+        importModal.style.display = 'none';
+    }
+
+    /**
+     * Import settings from a JSON file
+     */
+    function importSettings() {
+        const file = importFileInput.files[0];
+
+        if (!file) {
+            importError.textContent = 'Please select a file to import';
+            importError.style.display = 'block';
+            return;
+        }
+
+        if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+            importError.textContent = 'Please select a JSON file';
+            importError.style.display = 'block';
+            return;
+        }
+
+        // Confirm before overwriting existing data
+        const lists = StorageManager.getLists();
+        const hasExistingData = Object.keys(lists).length > 0;
+
+        if (hasExistingData) {
+            if (!confirm('This will replace your existing data. Are you sure you want to import settings?')) {
+                return;
+            }
+        }
+
+        // Import the settings
+        StorageManager.importSettings(file)
+            .then(data => {
+                // Close the modal
+                closeImportModal();
+
+                // Reload the UI
+                loadClassLists();
+
+                // Load the current list if one is set
+                const currentListId = StorageManager.getCurrentListId();
+                if (currentListId) {
+                    loadCurrentList(currentListId);
+                }
+
+                // Show success message
+                GroupThing.showError('Settings imported successfully!', 3000);
+            })
+            .catch(error => {
+                console.error('Error importing settings:', error);
+                importError.textContent = `Error importing settings: ${error.message}`;
+                importError.style.display = 'block';
+            });
     }
 });

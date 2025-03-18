@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emma's Teacher Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Open+Sans:wght@400;600&family=Quicksand:wght@500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        /* Inline styles for tabs - will move to CSS file later */
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid var(--light-accent-color);
+            background-color: var(--background-color);
+            padding: 0 1rem;
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            margin-right: 0.5rem;
+            background-color: var(--light-accent-color);
+            color: var(--dark-text-color);
+        }
+
+        .tab.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            height: calc(100vh - 100px); /* Subtract header, tabs, and footer height (reduced for shorter header/footer) */
+            width: 70%; /* 100% - (15% * 2) for left and right padding */
+            margin: 0 auto; /* Center the content */
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .welcome-banner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 15px var(--shadow);
+            z-index: 10;
+            max-width: 600px;
+            animation: fadeIn 1s ease-out;
+            display: none;
+        }
+
+        .welcome-banner.show {
+            display: block;
+        }
+
+        .welcome-banner h2 {
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-banner .close-welcome {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+
+        .tools-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+            padding: 2rem;
+        }
+
+        .tool-card {
+            background-color: var(--white);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 5px var(--shadow);
+            text-align: center;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tool-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px var(--shadow);
+        }
+
+        .tool-card h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .tool-card p {
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .tool-card .btn {
+            display: inline-block;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            display: block;
+            overflow: hidden;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Hide welcome banner after first visit */
+        body.visited .welcome-banner {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Emma's Teacher Tools</h1>
+        <div class="header-actions">
+            <!-- Placeholder for future actions -->
+        </div>
+    </header>
+
+    <div class="tabs">
+        <div class="tab active" data-tab="groupthing">GroupThing</div>
+        <div class="tab" data-tab="coming-soon">More Tools Coming Soon</div>
+    </div>
+
+    <main style="padding: 0; max-width: 100%; width: 100%;">
+        <div class="welcome-banner show" id="welcome-banner">
+            <span class="close-welcome" id="close-welcome">&times;</span>
+            <h2>Welcome to Emma's Teacher Tools!</h2>
+            <p>A collection of helpful tools designed to make teaching easier and more efficient.</p>
+        </div>
+
+        <div class="tab-content active" id="groupthing-tab">
+            <iframe src="index.html" title="GroupThing Tool"></iframe>
+        </div>
+
+        <div class="tab-content" id="coming-soon-tab">
+            <div class="tools-container">
+                <div class="tool-card">
+                    <h3>Lesson Planner</h3>
+                    <p>Create and organize your lesson plans with ease.</p>
+                    <span class="btn secondary disabled">Coming Soon</span>
+                </div>
+                <div class="tool-card">
+                    <h3>Attendance Tracker</h3>
+                    <p>Keep track of student attendance and generate reports.</p>
+                    <span class="btn secondary disabled">Coming Soon</span>
+                </div>
+                <div class="tool-card">
+                    <h3>Quiz Maker</h3>
+                    <p>Create interactive quizzes for your students.</p>
+                    <span class="btn secondary disabled">Coming Soon</span>
+                </div>
+                <div class="tool-card">
+                    <h3>Classroom Timer</h3>
+                    <p>Set timers for activities and transitions.</p>
+                    <span class="btn secondary disabled">Coming Soon</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Emma's Teacher Tools - Making teaching easier, one tool at a time</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    // Remove active class from all tabs and contents
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tabContents.forEach(c => c.classList.remove('active'));
+
+                    // Add active class to clicked tab
+                    tab.classList.add('active');
+
+                    // Show corresponding content
+                    const tabName = tab.getAttribute('data-tab');
+                    document.getElementById(`${tabName}-tab`).classList.add('active');
+                });
+            });
+
+            // Welcome banner functionality
+            const welcomeBanner = document.getElementById('welcome-banner');
+            const closeWelcome = document.getElementById('close-welcome');
+
+            // Check if user has visited before
+            if (localStorage.getItem('visited')) {
+                welcomeBanner.classList.remove('show');
+                document.body.classList.add('visited');
+            }
+
+            // Close welcome banner
+            closeWelcome.addEventListener('click', () => {
+                welcomeBanner.classList.remove('show');
+                localStorage.setItem('visited', 'true');
+                document.body.classList.add('visited');
+            });
+
+            // Auto-hide welcome banner after 5 seconds
+            setTimeout(() => {
+                welcomeBanner.classList.remove('show');
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

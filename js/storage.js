@@ -1,6 +1,7 @@
 /**
  * storage.js - Handles LocalStorage operations for GroupThing
  * Manages saving and loading class lists, blacklists, and group configurations
+ * Includes functionality for exporting and importing settings
  */
 
 const StorageManager = {
@@ -10,7 +11,8 @@ const StorageManager = {
     // Default data structure
     defaultData: {
         lists: {},
-        currentList: null
+        currentList: null,
+        version: "1.0.0"
     },
 
     /**
@@ -209,6 +211,80 @@ const StorageManager = {
     clearAll() {
         localStorage.removeItem(this.STORAGE_KEY);
         this.init();
+    },
+
+    /**
+     * Export all settings to a JSON file
+     * @returns {Object} The data to be exported
+     */
+    exportSettings() {
+        const data = this.getData();
+
+        // Ensure version is included in the exported data
+        if (!data.version) {
+            data.version = "1.0.0";
+        }
+
+        // Create a Blob with the JSON data
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+        // Create a download link and trigger the download
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'groupthing_settings.json';
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 0);
+
+        return data;
+    },
+
+    /**
+     * Import settings from a JSON file
+     * @param {File} file - The JSON file to import
+     * @returns {Promise} A promise that resolves when the import is complete
+     */
+    importSettings(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                try {
+                    const importedData = JSON.parse(event.target.result);
+
+                    // Validate the imported data
+                    if (!importedData.lists) {
+                        throw new Error('Invalid settings file: missing lists property');
+                    }
+
+                    // Merge with default data structure to ensure all required properties exist
+                    const mergedData = {
+                        ...this.defaultData,
+                        ...importedData,
+                        // Keep the version from imported data or use default
+                        version: importedData.version || this.defaultData.version
+                    };
+
+                    // Save the imported data
+                    this.saveData(mergedData);
+                    resolve(mergedData);
+                } catch (error) {
+                    reject(error);
+                }
+            };
+
+            reader.onerror = () => {
+                reject(new Error('Error reading the file'));
+            };
+
+            reader.readAsText(file);
+        });
     }
 };
 

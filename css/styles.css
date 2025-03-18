@@ -2,25 +2,27 @@
 
 :root {
     /* Colour variables */
-    --primary-color: #4a6fa5;
-    --secondary-color: #6fb3b8;
-    --background-color: #f9f9f9;
-    --text-color: #333333;
-    --accent-color: #ffb347;
-    --error-color: #e74c3c;
-    --light-gray: #e0e0e0;
-    --white: #ffffff;
-    --shadow: rgba(0, 0, 0, 0.1);
+    --primary-color: #ff85a1;       /* Pastel pink */
+    --secondary-color: #91c1ff;     /* Pastel blue */
+    --background-color: #fef9ff;    /* Light lavender white */
+    --text-color: #5a5a7a;          /* Soft dark purple */
+    --accent-color: #ffd166;        /* Pastel yellow */
+    --error-color: #ff7096;         /* Soft red */
+    --light-gray: #e0e0e0;          /* Light gray */
+    --white: #ffffff;               /* White */
+    --shadow: rgba(0, 0, 0, 0.1);   /* Shadow */
+    --light-accent-color: #d4f0f7;  /* Light blue */
+    --dark-text-color: #3a3a5a;     /* Darker text for contrast */
 
-    /* Group bubble colours */
-    --group-color-1: #7eb0d5;
-    --group-color-2: #8fd9a8;
-    --group-color-3: #b8c0ff;
-    --group-color-4: #ffb347;
-    --group-color-5: #ff9cee;
-    --group-color-6: #c5ce33;
-    --group-color-7: #e8a87c;
-    --group-color-8: #8ac6d1;
+    /* Group bubble colours - vibrant pastels */
+    --group-color-1: #ffafcc;       /* Pink */
+    --group-color-2: #a0e7e5;       /* Mint */
+    --group-color-3: #b8c0ff;       /* Lavender */
+    --group-color-4: #ffd166;       /* Yellow */
+    --group-color-5: #ff9cee;       /* Magenta */
+    --group-color-6: #c1fba4;       /* Light green */
+    --group-color-7: #ffc8a2;       /* Peach */
+    --group-color-8: #9bf6ff;       /* Light blue */
 }
 
 * {
@@ -47,13 +49,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 header {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
     color: var(--white);
-    padding: 1rem 2rem;
+    padding: 0.5rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 5px var(--shadow);
+    box-shadow: 0 2px 15px var(--shadow);
+    border-bottom: 3px solid var(--accent-color);
 }
 
 header h1 {
@@ -63,18 +66,18 @@ header h1 {
 
 main {
     flex: 1;
-    padding: 2rem;
-    max-width: 1200px;
-    margin: 0 auto;
     width: 100%;
+    margin: 0;
+    padding: 0;
 }
 
 footer {
-    background-color: var(--primary-color);
+    background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
     color: var(--white);
     text-align: center;
-    padding: 1rem;
+    padding: 0.3rem;
     margin-top: auto;
+    border-top: 3px solid var(--accent-color);
 }
 
 /* Button styles */
@@ -140,6 +143,13 @@ input:focus, select:focus {
     margin-bottom: 1rem;
 }
 
+/* Header actions */
+.header-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
 /* View toggle link */
 .view-toggle {
     color: var(--white);
@@ -152,6 +162,12 @@ input:focus, select:focus {
 
 .view-toggle:hover {
     background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Header buttons */
+.header-actions .btn {
+    font-size: 0.8rem;
+    padding: 0.4rem 0.8rem;
 }
 
 /* Modal styles */

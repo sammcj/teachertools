@@ -9,6 +9,8 @@
         "lists current"
         "blacklist current"
         "preview preview";
+    width: 100%;
+    max-width: 100%;
 }
 
 /* Class lists panel */
@@ -127,7 +129,7 @@
 }
 
 .student-item.selected {
-    background-color: rgba(74, 111, 165, 0.1);
+    background-color: rgba(255, 133, 161, 0.15); /* Pastel pink with transparency */
 }
 
 .student-controls {
@@ -184,7 +186,7 @@
 }
 
 .blacklist-item.selected {
-    background-color: rgba(74, 111, 165, 0.1);
+    background-color: rgba(255, 133, 161, 0.15); /* Pastel pink with transparency */
 }
 
 .blacklist-controls {
