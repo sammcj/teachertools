@@ -135,7 +135,7 @@ const StorageManager = {
             name: name,
             students: [],
             blacklist: [],
-            groupSize: 4,
+            groupSize: 3,
             currentGroups: null,
             useEmojiNames: true // Default to using emoji names
         };

@@ -701,7 +701,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         const class2 = StorageManager.getList(class2Id);
         class2.students = class2Students;
-        class2.groupSize = 2;
+        class2.groupSize = 3;
         StorageManager.saveList(class2Id, class2);
 
         // Add students to Book Club
@@ -712,7 +712,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ];
         const class3 = StorageManager.getList(class3Id);
         class3.students = class3Students;
-        class3.groupSize = 2;
+        class3.groupSize = 3;
         StorageManager.saveList(class3Id, class3);
 
         // Generate groups for Class 1A
