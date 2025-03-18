@@ -52,32 +52,37 @@
                     <div class="input-group">
                         <input type="text" id="new-student-input" placeholder="Enter student name">
                         <button id="add-student-btn" class="btn secondary">➕ Add</button>
+                        <button id="remove-student-btn" class="btn danger">➖ Remove Selected</button>
                     </div>
-                    <button id="remove-student-btn" class="btn danger">➖ Remove Selected</button>
                 </div>
             </div>
 
             <div class="group-size-control section-content">
-                <h3>Group Size: <span id="group-size-display">3</span></h3>
-                <div class="slider-container">
-                    <input type="range" id="group-size-input" min="1" max="15" value="3" class="slider">
-                    <div class="slider-labels">
-                        <span>1</span>
-                        <span>5</span>
-                        <span>10</span>
-                        <span>15</span>
+                <div class="group-size-row">
+                    <div class="group-size-slider">
+                        <h3>Group Size: <span id="group-size-display">3</span></h3>
+                        <div class="slider-container">
+                            <input type="range" id="group-size-input" min="1" max="15" value="3" class="slider">
+                            <div class="slider-labels">
+                                <span>1</span>
+                                <span>5</span>
+                                <span>10</span>
+                                <span>15</span>
+                            </div>
+                        </div>
                     </div>
-                </div>
-
-                <div class="emoji-names-toggle">
-                    <label for="use-emoji-names-toggle" class="toggle-label">
-                        <input type="checkbox" id="use-emoji-names-toggle" checked>
-                        <span>Use animal emoji names (e.g., 🦁 Lions) instead of group numbers</span>
-                    </label>
                 </div>
             </div>
 
-            <button id="generate-groups-btn" class="btn primary large">🔄 Generate Groups</button>
+            <div class="generate-groups-container">
+                <button id="generate-groups-btn" class="btn primary large">🔄 Generate Groups</button>
+                <div class="emoji-names-toggle">
+                    <label for="use-emoji-names-toggle" class="toggle-label">
+                        <input type="checkbox" id="use-emoji-names-toggle" checked>
+                        <span>Use emoji names</span>
+                    </label>
+                </div>
+            </div>
         </section>
 
         <section class="incompatible-panel">
@@ -99,9 +104,9 @@
                     <select id="incompatible-student2" class="dropdown">
                         <option value="">Select student 2</option>
                     </select>
+                    <button id="add-incompatible-btn" class="btn secondary">👥 Add Pair</button>
+                    <button id="remove-incompatible-btn" class="btn danger">❌ Remove Selected</button>
                 </div>
-                <button id="add-incompatible-btn" class="btn secondary">👥 Add Pair</button>
-                <button id="remove-incompatible-btn" class="btn danger">❌ Remove Selected</button>
             </div>
             </div>
         </section>
