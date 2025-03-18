@@ -1,6 +1,6 @@
 /**
  * teacher.js - Teacher view functionality for GroupThing
- * Handles class list management, student management, blacklist configuration, and group generation
+ * Handles class list management, student management, incompatible pairs configuration, and group generation
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,11 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const decreaseSizeBtn = document.getElementById('decrease-size-btn');
     const increaseSizeBtn = document.getElementById('increase-size-btn');
     const generateGroupsBtn = document.getElementById('generate-groups-btn');
-    const blacklistPairs = document.getElementById('blacklist-pairs');
-    const blacklistStudent1 = document.getElementById('blacklist-student1');
-    const blacklistStudent2 = document.getElementById('blacklist-student2');
-    const addBlacklistBtn = document.getElementById('add-blacklist-btn');
-    const removeBlacklistBtn = document.getElementById('remove-blacklist-btn');
+    const blacklistPairs = document.getElementById('incompatible-pairs');
+    const blacklistStudent1 = document.getElementById('incompatible-student1');
+    const blacklistStudent2 = document.getElementById('incompatible-student2');
+    const addBlacklistBtn = document.getElementById('add-incompatible-btn');
+    const removeBlacklistBtn = document.getElementById('remove-incompatible-btn');
     const groupsPreviewContainer = document.getElementById('groups-preview-container');
     const listModal = document.getElementById('list-modal');
     const modalTitle = document.getElementById('modal-title');
@@ -149,8 +149,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Load students
         loadStudents(list.students);
 
-        // Load blacklist
-        loadBlacklist(list.blacklist);
+        // Load incompatible pairs
+        loadIncompatiblePairs(list.blacklist);
 
         // Load groups if they exist
         if (list.currentGroups) {
@@ -194,18 +194,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Load blacklist pairs into the UI
-     * @param {Array} blacklist - Array of blacklisted pairs
+     * Load incompatible pairs into the UI
+     * @param {Array} blacklist - Array of incompatible pairs
      */
-    function loadBlacklist(blacklist) {
-        // Clear existing blacklist
+    function loadIncompatiblePairs(blacklist) {
+        // Clear existing incompatible pairs
         blacklistPairs.innerHTML = '';
         selectedBlacklistPairs = [];
 
         // Add each pair to list
         blacklist.forEach(pair => {
             const li = document.createElement('li');
-            li.className = 'blacklist-item';
+            li.className = 'incompatible-item';
             li.textContent = `${pair[0]} & ${pair[1]}`;
             li.dataset.student1 = pair[0];
             li.dataset.student2 = pair[1];
@@ -215,7 +215,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Update the blacklist dropdown options based on current students
+     * Update the incompatible pairs dropdown options based on current students
      */
     function updateBlacklistDropdowns() {
         const currentListId = StorageManager.getCurrentListId();
@@ -258,9 +258,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Toggle selection of a blacklist pair
-     * @param {HTMLElement} element - The blacklist list item
-     * @param {Array} pair - The blacklisted pair
+     * Toggle selection of an incompatible pair
+     * @param {HTMLElement} element - The incompatible pair list item
+     * @param {Array} pair - The incompatible pair
      */
     function toggleBlacklistSelection(element, pair) {
         const isSelected = element.classList.toggle('selected');
@@ -425,7 +425,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Remove selected students
         list.students = list.students.filter(student => !selectedStudents.includes(student));
 
-        // Also remove from blacklist
+        // Also remove from incompatible pairs
         list.blacklist = list.blacklist.filter(pair =>
             !selectedStudents.includes(pair[0]) && !selectedStudents.includes(pair[1]));
 
@@ -434,7 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Update UI
         loadStudents(list.students);
-        loadBlacklist(list.blacklist);
+        loadIncompatiblePairs(list.blacklist);
     }
 
     /**
@@ -456,7 +456,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Add a blacklist pair to the current list
+     * Add an incompatible pair to the current list
      */
     function addBlacklistPair() {
         const student1 = blacklistStudent1.value;
@@ -469,7 +469,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!student1 || !student2) {
-            GroupThing.showError('Please select both students for the blacklist pair');
+            GroupThing.showError('Please select both students for the incompatible pair');
             return;
         }
 
@@ -487,26 +487,26 @@ document.addEventListener('DOMContentLoaded', () => {
             (pair[0] === student2 && pair[1] === student1));
 
         if (pairExists) {
-            GroupThing.showError('This blacklist pair already exists');
+            GroupThing.showError('This incompatible pair already exists');
             return;
         }
 
-        // Add pair to blacklist
+        // Add pair to incompatible pairs
         list.blacklist.push([student1, student2]);
         StorageManager.saveList(currentListId, list);
 
         // Update UI
-        loadBlacklist(list.blacklist);
+        loadIncompatiblePairs(list.blacklist);
         blacklistStudent1.value = '';
         blacklistStudent2.value = '';
     }
 
     /**
-     * Remove selected blacklist pairs from the current list
+     * Remove selected incompatible pairs from the current list
      */
     function removeSelectedBlacklistPairs() {
         if (selectedBlacklistPairs.length === 0) {
-            GroupThing.showError('Please select blacklist pairs to remove');
+            GroupThing.showError('Please select incompatible pairs to remove');
             return;
         }
 
@@ -527,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
         StorageManager.saveList(currentListId, list);
 
         // Update UI
-        loadBlacklist(list.blacklist);
+        loadIncompatiblePairs(list.blacklist);
     }
 
     /**

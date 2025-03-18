@@ -7,7 +7,7 @@
     gap: 1.5rem;
     grid-template-areas:
         "lists current"
-        "blacklist current"
+        "incompatible current"
         "preview preview";
     width: 100%;
     max-width: 100%;
@@ -152,16 +152,16 @@
     text-align: center;
 }
 
-/* Blacklist panel */
-.blacklist-panel {
-    grid-area: blacklist;
+/* Incompatible pairs panel */
+.incompatible-panel {
+    grid-area: incompatible;
     background-color: var(--white);
     border-radius: 8px;
     padding: 1.5rem;
     box-shadow: 0 2px 5px var(--shadow);
 }
 
-.blacklist-container {
+.incompatible-container {
     max-height: 200px;
     overflow-y: auto;
     border: 1px solid var(--light-gray);
@@ -169,11 +169,11 @@
     margin-bottom: 1rem;
 }
 
-.blacklist-list {
+.incompatible-list {
     list-style-type: none;
 }
 
-.blacklist-item {
+.incompatible-item {
     padding: 0.75rem 1rem;
     border-bottom: 1px solid var(--light-gray);
     display: flex;
@@ -181,26 +181,26 @@
     align-items: center;
 }
 
-.blacklist-item:last-child {
+.incompatible-item:last-child {
     border-bottom: none;
 }
 
-.blacklist-item.selected {
+.incompatible-item.selected {
     background-color: rgba(255, 133, 161, 0.15); /* Pastel pink with transparency */
 }
 
-.blacklist-controls {
+.incompatible-controls {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.blacklist-controls .input-group {
+.incompatible-controls .input-group {
     display: flex;
     gap: 0.5rem;
 }
 
-.blacklist-controls select {
+.incompatible-controls select {
     flex: 1;
 }
 
@@ -256,7 +256,7 @@
         grid-template-areas:
             "lists"
             "current"
-            "blacklist"
+            "incompatible"
             "preview";
     }
 }
