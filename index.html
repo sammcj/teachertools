@@ -12,8 +12,8 @@
     <header>
         <h1>Emma's Teacher Tools - GroupThing</h1>
         <div class="header-actions">
-            <button id="export-settings-btn" class="btn secondary">Export Settings</button>
-            <button id="import-settings-btn" class="btn secondary">Import Settings</button>
+            <button id="export-settings-btn" class="btn secondary">💾 Export Settings</button>
+            <button id="import-settings-btn" class="btn secondary">📂 Import Settings</button>
             <a href="student.html" class="view-toggle" target="_parent">🎓 Switch to Student View</a>
         </div>
     </header>
@@ -25,9 +25,9 @@
                 <!-- Class lists will be populated here -->
             </div>
             <div class="list-actions">
-                <button id="new-list-btn" class="btn primary">+ New List</button>
-                <button id="load-sample-btn" class="btn secondary">Load Sample Groups</button>
-                <button id="clear-all-btn" class="btn danger">Clear All Data</button>
+                <button id="new-list-btn" class="btn primary">📝 New List</button>
+                <button id="load-sample-btn" class="btn secondary">📚 Load Sample Groups</button>
+                <button id="clear-all-btn" class="btn danger">🗑️ Clear All Data</button>
             </div>
         </section>
 
@@ -49,9 +49,9 @@
                 <div class="student-controls">
                     <div class="input-group">
                         <input type="text" id="new-student-input" placeholder="Enter student name">
-                        <button id="add-student-btn" class="btn secondary">+ Add</button>
+                        <button id="add-student-btn" class="btn secondary">➕ Add</button>
                     </div>
-                    <button id="remove-student-btn" class="btn danger">- Remove Selected</button>
+                    <button id="remove-student-btn" class="btn danger">➖ Remove Selected</button>
                 </div>
             </div>
 
@@ -64,16 +64,16 @@
                 </div>
             </div>
 
-            <button id="generate-groups-btn" class="btn primary large">Generate Groups</button>
+            <button id="generate-groups-btn" class="btn primary large">🔄 Generate Groups</button>
         </section>
 
         <section class="blacklist-panel">
-            <h2>Blacklist Pairs</h2>
+            <h2>Incompatible Pairs</h2>
             <p class="help-text">Students who cannot be in the same group</p>
 
             <div class="blacklist-container">
                 <ul id="blacklist-pairs" class="blacklist-list">
-                    <!-- Blacklist pairs will be populated here -->
+                    <!-- Incompatible pairs will be populated here -->
                 </ul>
             </div>
 
@@ -86,8 +86,8 @@
                         <option value="">Select student 2</option>
                     </select>
                 </div>
-                <button id="add-blacklist-btn" class="btn secondary">+ Add Pair</button>
-                <button id="remove-blacklist-btn" class="btn danger">- Remove Selected</button>
+                <button id="add-blacklist-btn" class="btn secondary">👥 Add Pair</button>
+                <button id="remove-blacklist-btn" class="btn danger">❌ Remove Selected</button>
             </div>
         </section>
 
@@ -110,8 +110,8 @@
                 <input type="text" id="list-name-input" placeholder="e.g., Class 1A">
             </div>
             <div class="modal-buttons">
-                <button id="save-list-btn" class="btn primary">Save</button>
-                <button id="cancel-list-btn" class="btn">Cancel</button>
+                <button id="save-list-btn" class="btn primary">💾 Save</button>
+                <button id="cancel-list-btn" class="btn">❌ Cancel</button>
             </div>
         </div>
     </div>
@@ -127,8 +127,8 @@
             </div>
             <div id="import-error" class="error-message" style="display: none; color: var(--error-color); margin-bottom: 1rem;"></div>
             <div class="modal-buttons">
-                <button id="confirm-import-btn" class="btn primary">Import</button>
-                <button id="cancel-import-btn" class="btn">Cancel</button>
+                <button id="confirm-import-btn" class="btn primary">📥 Import</button>
+                <button id="cancel-import-btn" class="btn">❌ Cancel</button>
             </div>
         </div>
     </div>

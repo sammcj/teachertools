@@ -142,11 +142,7 @@
     </div>
 
     <main style="padding: 0; max-width: 100%; width: 100%;">
-        <div class="welcome-banner show" id="welcome-banner">
-            <span class="close-welcome" id="close-welcome">&times;</span>
-            <h2>Welcome to Emma's Teacher Tools!</h2>
-            <p>A collection of helpful tools designed to make teaching easier and more efficient.</p>
-        </div>
+        <!-- Welcome banner removed as requested -->
 
         <div class="tab-content active" id="groupthing-tab">
             <iframe src="index.html" title="GroupThing Tool"></iframe>
@@ -193,27 +189,11 @@
                 });
             });
 
-            // Welcome banner functionality
-            const welcomeBanner = document.getElementById('welcome-banner');
-            const closeWelcome = document.getElementById('close-welcome');
+            // Welcome banner functionality removed as requested
 
-            // Check if user has visited before
-            if (localStorage.getItem('visited')) {
-                welcomeBanner.classList.remove('show');
-                document.body.classList.add('visited');
-            }
-
-            // Close welcome banner
-            closeWelcome.addEventListener('click', () => {
-                welcomeBanner.classList.remove('show');
-                localStorage.setItem('visited', 'true');
-                document.body.classList.add('visited');
-            });
-
-            // Auto-hide welcome banner after 5 seconds
-            setTimeout(() => {
-                welcomeBanner.classList.remove('show');
-            }, 5000);
+            // Mark as visited to prevent any future welcome banners
+            localStorage.setItem('visited', 'true');
+            document.body.classList.add('visited');
         });
     </script>
 </body>
