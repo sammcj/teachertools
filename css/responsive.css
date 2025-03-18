@@ -71,9 +71,18 @@ iframe {
 @media (max-width: 768px) {
     /* Full width content on mobile */
     .tab-content {
-        width: 100%;
-        margin: 0;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
         height: calc(100vh - 80px);
+        max-width: 100vw;
+    }
+
+    body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
     }
 
     /* Adjust tabs for mobile */
