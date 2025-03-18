@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="css/styles.css">
     <link rel="stylesheet" href="css/teacher.css">
 </head>
-<body style="width: 100%; overflow-x: hidden;">
+<body style="width: 100%; overflow-x: hidden; margin: 0; padding: 0;">
     <header>
         <h1>Emma's Teacher Tools - GroupThing</h1>
         <div class="header-actions">
@@ -18,9 +18,10 @@
         </div>
     </header>
 
-    <main class="teacher-container" style="width: 100%; max-width: none; padding: 1rem;">
+    <main class="teacher-container" style="width: 100%; max-width: none; padding: 0.5rem;">
         <section class="class-lists-panel">
-            <h2>Class Lists</h2>
+            <h2 class="section-header">Class Lists</h2>
+            <div class="section-content">
             <div class="class-list" id="class-list-container">
                 <!-- Class lists will be populated here -->
             </div>
@@ -29,17 +30,18 @@
                 <button id="load-sample-btn" class="btn secondary">📚 Load Sample Groups</button>
                 <button id="clear-all-btn" class="btn danger">🗑️ Clear All Data</button>
             </div>
+            </div>
         </section>
 
         <section class="current-list-panel">
-            <div class="list-header">
+            <div class="list-header section-header">
                 <h2>Current List: <span id="current-list-name">None Selected</span></h2>
                 <select id="list-selector" class="dropdown">
                     <option value="">Select a list...</option>
                 </select>
             </div>
 
-            <div class="student-management">
+            <div class="student-management section-content">
                 <h3>Student Names:</h3>
                 <div class="student-list-container">
                     <ul id="student-list" class="student-list">
@@ -55,7 +57,7 @@
                 </div>
             </div>
 
-            <div class="group-size-control">
+            <div class="group-size-control section-content">
                 <h3>Group Size:</h3>
                 <div class="input-group">
                     <button id="decrease-size-btn" class="btn">-</button>
@@ -68,7 +70,8 @@
         </section>
 
         <section class="incompatible-panel">
-            <h2>Incompatible Pairs</h2>
+            <h2 class="section-header">Incompatible Pairs</h2>
+            <div class="section-content">
             <p class="help-text">Students who cannot be in the same group</p>
 
             <div class="incompatible-container">
@@ -89,13 +92,16 @@
                 <button id="add-incompatible-btn" class="btn secondary">👥 Add Pair</button>
                 <button id="remove-incompatible-btn" class="btn danger">❌ Remove Selected</button>
             </div>
+            </div>
         </section>
 
         <section class="groups-preview-panel">
-            <h2>Generated Groups</h2>
+            <h2 class="section-header">Generated Groups</h2>
+            <div class="section-content">
             <div id="groups-preview-container" class="groups-preview">
                 <!-- Generated groups preview will be shown here -->
                 <p class="empty-state">No groups generated yet. Use the "Generate Groups" button to create groups.</p>
+            </div>
             </div>
         </section>
     </main>
@@ -135,6 +141,7 @@
 
     <script src="js/storage.js"></script>
     <script src="js/common.js"></script>
+    <script src="js/responsive.js"></script>
     <script src="js/teacher.js"></script>
 </body>
 </html>
