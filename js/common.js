@@ -4,6 +4,25 @@
  */
 
 const GroupThing = {
+    // Animal emojis and their corresponding names for group naming
+    animalEmojis: [
+        { emoji: '🦁', name: 'Lions' },
+        { emoji: '🐯', name: 'Tigers' },
+        { emoji: '🐻', name: 'Bears' },
+        { emoji: '🐨', name: 'Koalas' },
+        { emoji: '🐼', name: 'Pandas' },
+        { emoji: '🦊', name: 'Foxes' },
+        { emoji: '🐰', name: 'Rabbits' },
+        { emoji: '🐶', name: 'Puppies' },
+        { emoji: '🐱', name: 'Kittens' },
+        { emoji: '🦉', name: 'Owls' },
+        { emoji: '🦅', name: 'Eagles' },
+        { emoji: '🐢', name: 'Turtles' },
+        { emoji: '🐬', name: 'Dolphins' },
+        { emoji: '🦒', name: 'Giraffes' },
+        { emoji: '🐘', name: 'Elephants' },
+        { emoji: '🦘', name: 'Kangaroos' }
+    ],
     /**
      * Generate random groups from a list of students
      * @param {Array} students - Array of student names
@@ -122,10 +141,28 @@ const GroupThing = {
     /**
      * Format a group name
      * @param {number} index - The group index
+     * @param {boolean} useEmojiNames - Whether to use emoji names (true) or group numbers (false)
      * @returns {string} Formatted group name
      */
-    formatGroupName(index) {
-        return `Group ${index + 1}`;
+    formatGroupName(index, useEmojiNames = false) {
+        if (useEmojiNames) {
+            // Use modulo to cycle through the available emojis if there are more groups than emojis
+            const emojiIndex = index % this.animalEmojis.length;
+            const animal = this.animalEmojis[emojiIndex];
+            return `${animal.emoji} ${animal.name}`;
+        } else {
+            return `Group ${index + 1}`;
+        }
+    },
+
+    /**
+     * Get emoji for a group
+     * @param {number} index - The group index
+     * @returns {string} Emoji character
+     */
+    getGroupEmoji(index) {
+        const emojiIndex = index % this.animalEmojis.length;
+        return this.animalEmojis[emojiIndex].emoji;
     },
 
     /**

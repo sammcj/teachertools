@@ -21,7 +21,7 @@
 
 /* Group bubble styles */
 .group-bubble {
-    border-radius: 50%;
+    border-radius: 20px;
     padding: 1.5rem;
     min-width: 200px;
     min-height: 200px;
@@ -34,6 +34,7 @@
     color: var(--white);
     text-align: center;
     animation: fadeIn 0.5s ease-in-out;
+    border: 3px solid rgba(255, 255, 255, 0.3);
 }
 
 .group-bubble:hover {
@@ -99,6 +100,40 @@
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+/* Confetti animation */
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1000;
+    overflow: hidden;
+}
+
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #f00;
+    opacity: 0;
+    animation: confetti-fall 3s ease-in-out forwards;
+}
+
+@keyframes confetti-fall {
+    0% {
+        opacity: 1;
+        top: -10px;
+        transform: translateX(0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        top: 100%;
+        transform: translateX(100px) rotate(360deg);
     }
 }
 

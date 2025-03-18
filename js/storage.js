@@ -136,7 +136,8 @@ const StorageManager = {
             students: [],
             blacklist: [],
             groupSize: 4,
-            currentGroups: null
+            currentGroups: null,
+            useEmojiNames: true // Default to using emoji names
         };
 
         this.saveList(listId, newList);

@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupSizeInput = document.getElementById('group-size-input');
     const groupSizeDisplay = document.getElementById('group-size-display');
     const generateGroupsBtn = document.getElementById('generate-groups-btn');
+    const useEmojiNamesToggle = document.getElementById('use-emoji-names-toggle');
     const blacklistPairs = document.getElementById('incompatible-pairs');
     const blacklistStudent1 = document.getElementById('incompatible-student1');
     const blacklistStudent2 = document.getElementById('incompatible-student2');
@@ -54,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     newListBtn.addEventListener('click', openNewListModal);
     loadSampleBtn.addEventListener('click', loadSampleData);
     clearAllBtn.addEventListener('click', clearAllData);
+    useEmojiNamesToggle.addEventListener('change', toggleEmojiNames);
     closeModal.addEventListener('click', closeListModal);
     cancelListBtn.addEventListener('click', closeListModal);
     saveListBtn.addEventListener('click', saveList);
@@ -144,6 +146,11 @@ document.addEventListener('DOMContentLoaded', () => {
         currentListName.textContent = list.name;
         groupSizeInput.value = list.groupSize;
         groupSizeDisplay.textContent = list.groupSize;
+
+        // Set emoji names toggle
+        if (useEmojiNamesToggle) {
+            useEmojiNamesToggle.checked = list.useEmojiNames !== false; // Default to true if not set
+        }
 
         // Load students
         loadStudents(list.students);
@@ -565,13 +572,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function displayGroups(groups) {
         groupsPreviewContainer.innerHTML = '';
 
+        // Get current list to check if emoji names are enabled
+        const currentListId = StorageManager.getCurrentListId();
+        const currentList = StorageManager.getList(currentListId);
+        const useEmojiNames = currentList && currentList.useEmojiNames !== false;
+
         groups.forEach((group, index) => {
             const groupElement = document.createElement('div');
             groupElement.className = 'preview-group';
 
             const groupTitle = document.createElement('h3');
             groupTitle.className = 'preview-group-title';
-            groupTitle.textContent = GroupThing.formatGroupName(index);
+            groupTitle.textContent = GroupThing.formatGroupName(index, useEmojiNames);
 
             const membersList = document.createElement('ul');
             membersList.className = 'preview-group-members';
@@ -587,6 +599,26 @@ document.addEventListener('DOMContentLoaded', () => {
             groupElement.appendChild(membersList);
             groupsPreviewContainer.appendChild(groupElement);
         });
+    }
+
+    /**
+     * Toggle emoji names for groups
+     */
+    function toggleEmojiNames() {
+        const currentListId = StorageManager.getCurrentListId();
+        if (!currentListId) return;
+
+        const list = StorageManager.getList(currentListId);
+        if (!list) return;
+
+        // Update the setting
+        list.useEmojiNames = useEmojiNamesToggle.checked;
+        StorageManager.saveList(currentListId, list);
+
+        // Update the display if groups exist
+        if (list.currentGroups && list.currentGroups.length > 0) {
+            displayGroups(list.currentGroups);
+        }
     }
 
     /**

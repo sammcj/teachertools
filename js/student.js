@@ -4,6 +4,10 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Create confetti container
+    const confettiContainer = document.createElement('div');
+    confettiContainer.className = 'confetti-container';
+    document.body.appendChild(confettiContainer);
     // DOM Elements
     const groupsContainer = document.getElementById('groups-container');
     const className = document.getElementById('class-name');
@@ -179,6 +183,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 groupsContainer.classList.remove('rectangular-layout');
             }
 
+            // Get current list to check if emoji names are enabled
+            let useEmojiNames = true; // Default to true
+            try {
+                const currentListId = StorageManager.getCurrentListId();
+                if (currentListId) {
+                    const currentList = StorageManager.getList(currentListId);
+                    if (currentList) {
+                        useEmojiNames = currentList.useEmojiNames !== false;
+                    }
+                }
+            } catch (e) {
+                console.error('Error checking emoji names setting:', e);
+            }
+
             // Create and add group bubbles
             groups.forEach((group, index) => {
                 try {
@@ -188,7 +206,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Add group title
                     const groupTitle = document.createElement('h2');
                     groupTitle.className = 'group-title';
-                    groupTitle.textContent = GroupThing.formatGroupName(index);
+                    groupTitle.textContent = GroupThing.formatGroupName(index, useEmojiNames);
                     groupBubble.appendChild(groupTitle);
 
                     // Add group members
@@ -213,10 +231,65 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             console.log('Groups displayed successfully');
+
+            // Create confetti effect
+            createConfetti();
         } catch (error) {
             console.error('Error in displayGroups:', error);
             showEmptyState('An error occurred while displaying groups. Please try again.');
         }
+    }
+
+    /**
+     * Create confetti effect
+     */
+    function createConfetti() {
+        // Clear any existing confetti
+        confettiContainer.innerHTML = '';
+
+        // Confetti colors matching our pastel theme
+        const colors = [
+            '#ffafcc', // Pink
+            '#a0e7e5', // Mint
+            '#b8c0ff', // Lavender
+            '#ffd166', // Yellow
+            '#ff9cee', // Magenta
+            '#c1fba4', // Light green
+            '#ffc8a2', // Peach
+            '#9bf6ff'  // Light blue
+        ];
+
+        // Create confetti pieces
+        const confettiCount = 100;
+        for (let i = 0; i < confettiCount; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+
+            // Random properties
+            const size = Math.random() * 10 + 5; // 5-15px
+            const color = colors[Math.floor(Math.random() * colors.length)];
+            const left = Math.random() * 100; // 0-100%
+            const delay = Math.random() * 2; // 0-2s
+            const duration = Math.random() * 2 + 2; // 2-4s
+            const rotation = Math.random() * 360; // 0-360deg
+
+            // Apply styles
+            confetti.style.width = `${size}px`;
+            confetti.style.height = `${size}px`;
+            confetti.style.backgroundColor = color;
+            confetti.style.left = `${left}%`;
+            confetti.style.animationDelay = `${delay}s`;
+            confetti.style.animationDuration = `${duration}s`;
+            confetti.style.transform = `rotate(${rotation}deg)`;
+
+            // Add to container
+            confettiContainer.appendChild(confetti);
+        }
+
+        // Remove confetti after animation completes
+        setTimeout(() => {
+            confettiContainer.innerHTML = '';
+        }, 5000);
     }
 
     /**

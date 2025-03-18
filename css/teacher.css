@@ -1,5 +1,25 @@
 /* Styles specific to the teacher view */
 
+/* Emoji names toggle styling */
+.emoji-names-toggle {
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background-color: var(--light-accent-color);
+    border-radius: 8px;
+}
+
+.toggle-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.toggle-label input[type="checkbox"] {
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+
 .teacher-container {
     display: grid;
     grid-template-columns: 1fr 2fr;
