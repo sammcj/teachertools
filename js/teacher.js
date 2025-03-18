@@ -13,8 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addStudentBtn = document.getElementById('add-student-btn');
     const removeStudentBtn = document.getElementById('remove-student-btn');
     const groupSizeInput = document.getElementById('group-size-input');
-    const decreaseSizeBtn = document.getElementById('decrease-size-btn');
-    const increaseSizeBtn = document.getElementById('increase-size-btn');
+    const groupSizeDisplay = document.getElementById('group-size-display');
     const generateGroupsBtn = document.getElementById('generate-groups-btn');
     const blacklistPairs = document.getElementById('incompatible-pairs');
     const blacklistStudent1 = document.getElementById('incompatible-student1');
@@ -64,8 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.key === 'Enter') addStudent();
     });
     removeStudentBtn.addEventListener('click', removeSelectedStudents);
-    decreaseSizeBtn.addEventListener('click', () => adjustGroupSize(-1));
-    increaseSizeBtn.addEventListener('click', () => adjustGroupSize(1));
+    groupSizeInput.addEventListener('input', updateGroupSizeDisplay);
     generateGroupsBtn.addEventListener('click', generateGroups);
     addBlacklistBtn.addEventListener('click', addBlacklistPair);
     removeBlacklistBtn.addEventListener('click', removeSelectedBlacklistPairs);
@@ -145,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Update UI with list data
         currentListName.textContent = list.name;
         groupSizeInput.value = list.groupSize;
+        groupSizeDisplay.textContent = list.groupSize;
 
         // Load students
         loadStudents(list.students);
@@ -438,15 +437,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Adjust the group size
-     * @param {number} change - The amount to change the size by
+     * Update the displayed group size value
      */
-    function adjustGroupSize(change) {
-        let size = parseInt(groupSizeInput.value) + change;
-
-        // Ensure size is within valid range
-        size = Math.max(2, Math.min(10, size));
-        groupSizeInput.value = size;
+    function updateGroupSizeDisplay() {
+        const size = parseInt(groupSizeInput.value);
+        groupSizeDisplay.textContent = size;
 
         // Update storage
         const currentListId = StorageManager.getCurrentListId();
