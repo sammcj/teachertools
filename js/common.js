@@ -6,22 +6,22 @@
 const GroupThing = {
     // Animal emojis and their corresponding names for group naming
     animalEmojis: [
-        { emoji: '🦁', name: 'Lions' },
-        { emoji: '🐯', name: 'Tigers' },
-        { emoji: '🐻', name: 'Bears' },
+        { emoji: '🦘', name: 'Kangaroos' },
         { emoji: '🐨', name: 'Koalas' },
+        { emoji: '🐬', name: 'Dolphins' },
+        { emoji: '🦒', name: 'Giraffes' },
         { emoji: '🐼', name: 'Pandas' },
-        { emoji: '🦊', name: 'Foxes' },
         { emoji: '🐰', name: 'Rabbits' },
         { emoji: '🐶', name: 'Puppies' },
-        { emoji: '🐱', name: 'Kittens' },
+        { emoji: '🐱', name: 'Cats' },
+        { emoji: '🦁', name: 'Lions' },
+        { emoji: '🐻', name: 'Bears' },
+        { emoji: '🐘', name: 'Elephants' },
         { emoji: '🦉', name: 'Owls' },
         { emoji: '🦅', name: 'Eagles' },
         { emoji: '🐢', name: 'Turtles' },
-        { emoji: '🐬', name: 'Dolphins' },
-        { emoji: '🦒', name: 'Giraffes' },
-        { emoji: '🐘', name: 'Elephants' },
-        { emoji: '🦘', name: 'Kangaroos' }
+        { emoji: '🐯', name: 'Tigers' },
+        { emoji: '🦊', name: 'Foxes' },
     ],
     /**
      * Generate random groups from a list of students
