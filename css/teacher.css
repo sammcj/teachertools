@@ -266,6 +266,19 @@
     gap: 0.5rem;
 }
 
+/* Make student name input wider */
+#new-student-input {
+    min-width: 300px;
+    flex-grow: 2;
+}
+
+.student-controls .input-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    width: 100%;
+}
+
 .group-size-control {
     margin-bottom: 1.5rem;
 }
