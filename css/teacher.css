@@ -204,6 +204,8 @@
     box-shadow: 0 2px 5px var(--shadow);
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
+    min-height: 600px;
 }
 
 .list-header {
@@ -222,11 +224,19 @@
 }
 
 .student-list-container {
-    max-height: 350px;
+    max-height: 450px;
     overflow-y: auto;
     border: 1px solid var(--light-gray);
     border-radius: 4px;
     margin-bottom: 1rem;
+    flex-grow: 1;
+}
+
+.student-management {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
 }
 
 .student-list {
