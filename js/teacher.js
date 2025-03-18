@@ -682,9 +682,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const class1Students = [
             'Alice Smith', 'Bob Johnson', 'Stephen Fry',
             'Diana Prince', 'Malala Yousafzai', 'Fiona Apple',
-            'George Miller', 'Ada Lovelace', 'Grace Hopper',
+            'Emilia Airhart', 'Ada Lovelace', 'Grace Hopper',
             'Jenny Lewis', 'Maynard James', 'Nancy Drew',
-            'Emilia Airhart', 'Oscar Wilde', 'Pablo Picasso',
+            'Oscar Wilde', 'Pablo Picasso', 'George Miller',
             'Serena Williams', 'Ethan Hunt', 'Jacinda Ardern'
         ];
         const class1 = StorageManager.getList(class1Id);
