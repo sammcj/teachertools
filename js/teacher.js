@@ -45,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedBlacklistPairs = [];
     let editingListId = null;
 
-    // Initialize the UI
-    initializeUI();
+    // Initialise the UI
+    InitialiseUI();
 
     // Update student view link
     updateStudentViewLink();
@@ -76,9 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
     importModal.querySelector('.close-modal').addEventListener('click', closeImportModal);
 
     /**
-     * Initialize the UI with data from storage
+     * Initialise the UI with data from storage
      */
-    function initializeUI() {
+    function InitialiseUI() {
         // Load class lists
         loadClassLists();
 

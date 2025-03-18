@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const groupsContainer = document.getElementById('groups-container');
     const className = document.getElementById('class-name');
 
-    // Initialize the UI
-    initializeUI();
+    // Initialise the UI
+    InitialiseUI();
 
     /**
-     * Initialize the UI with data from storage
+     * Initialise the UI with data from storage
      */
-    function initializeUI() {
+    function InitialiseUI() {
         try {
             // Check for list ID and encoded data in URL parameters
             let listId = null;
@@ -102,7 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 showEmptyState('No list selected. Please return to the teacher view to select a list.');
             }
         } catch (error) {
-            console.error('Error in initializeUI:', error);
+            console.error('Error in InitialiseUI:', error);
             showEmptyState('An error occurred while initializing the view. Please try again.');
         }
     }

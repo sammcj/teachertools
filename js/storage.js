@@ -16,7 +16,7 @@ const StorageManager = {
     },
 
     /**
-     * Initialize storage with default data if not exists
+     * Initialise storage with default data if not exists
      */
     init() {
         if (!localStorage.getItem(this.STORAGE_KEY)) {
@@ -288,5 +288,5 @@ const StorageManager = {
     }
 };
 
-// Initialize storage when the script loads
+// Initialise storage when the script loads
 StorageManager.init();
