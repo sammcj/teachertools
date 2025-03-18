@@ -77,35 +77,47 @@ const GroupThing = {
      * @returns {Array} Array of groups
      */
     createGroups(students, groupSize) {
-        const groups = [];
-        const numStudents = students.length;
-        const numGroups = Math.ceil(numStudents / groupSize);
+        // Handle edge cases
+        if (students.length === 0) return [];
+        if (students.length <= groupSize) return [students]; // Just one group if fewer students than group size
 
-        // Create empty groups
-        for (let i = 0; i < numGroups; i++) {
-            groups.push([]);
+        // Special case: if we have exactly one more than a multiple of the group size
+        // (which would result in a single-person group), reduce the number of groups by 1
+        const numStudents = students.length;
+        let numGroups = Math.ceil(numStudents / groupSize);
+
+        // If we would end up with a single-person group, adjust the number of groups
+        if (numStudents % numGroups === 1 && numGroups > 1) {
+            numGroups--;
         }
 
-        // Distribute students evenly
+        const groups = Array.from({ length: numGroups }, () => []);
+
+        // Distribute students evenly among groups
         for (let i = 0; i < numStudents; i++) {
             const groupIndex = i % numGroups;
             groups[groupIndex].push(students[i]);
         }
 
-        // Check for groups with only one student and redistribute
+        // Double-check for any single-person groups that might still exist
+        // This is a safety check, but with the algorithm above, it shouldn't happen
         const singlePersonGroups = groups.filter(group => group.length === 1);
 
         if (singlePersonGroups.length > 0) {
             // For each single-person group
             for (const singleGroup of singlePersonGroups) {
-                // Find the largest group to take a student from
-                const largestGroupIndex = groups.findIndex(
-                    group => group !== singleGroup && group.length > 1
-                );
+                // Find the smallest group that has more than one person
+                const multiPersonGroups = groups.filter(group => group !== singleGroup && group.length > 1);
 
-                if (largestGroupIndex !== -1) {
-                    // Add the single person to the largest group
-                    groups[largestGroupIndex].push(singleGroup[0]);
+                if (multiPersonGroups.length > 0) {
+                    // Sort groups by size (ascending)
+                    multiPersonGroups.sort((a, b) => a.length - b.length);
+
+                    // Get the smallest multi-person group
+                    const targetGroup = multiPersonGroups[0];
+
+                    // Add the single person to this group
+                    targetGroup.push(singleGroup[0]);
 
                     // Remove the single-person group
                     const singleGroupIndex = groups.findIndex(group => group === singleGroup);

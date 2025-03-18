@@ -61,8 +61,12 @@ document.addEventListener('DOMContentLoaded', () => {
     saveListBtn.addEventListener('click', saveList);
     listSelector.addEventListener('change', handleListSelection);
     addStudentBtn.addEventListener('click', addStudent);
-    newStudentInput.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') addStudent();
+    newStudentInput.addEventListener('keydown', (e) => {
+        // Allow Shift+Enter to create a new line without submitting
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault(); // Prevent default to avoid adding a newline AND submitting
+            addStudent();
+        }
     });
     removeStudentBtn.addEventListener('click', removeSelectedStudents);
     groupSizeInput.addEventListener('input', updateGroupSizeDisplay);
@@ -378,10 +382,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     /**
-     * Add a new student to the current list
+     * Add a new student or multiple students to the current list
      */
     function addStudent() {
-        const studentName = newStudentInput.value.trim();
+        const studentInput = newStudentInput.value.trim();
         const currentListId = StorageManager.getCurrentListId();
 
         if (!currentListId) {
@@ -389,28 +393,74 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        if (!studentName) {
-            GroupThing.showError('Please enter a student name');
+        if (!studentInput) {
+            GroupThing.showError('Please enter at least one student name');
             return;
         }
 
         const list = StorageManager.getList(currentListId);
         if (!list) return;
 
-        // Check if student already exists
-        if (list.students.includes(studentName)) {
-            GroupThing.showError('This student is already in the list');
-            return;
+        // Check if input contains multiple lines (multiple students)
+        if (studentInput.includes('\n')) {
+            // Split by newlines and filter out empty lines
+            const studentNames = studentInput.split('\n')
+                .map(name => name.trim())
+                .filter(name => name.length > 0);
+
+            let addedCount = 0;
+            let duplicateCount = 0;
+
+            // Add each student
+            studentNames.forEach(name => {
+                // Skip if student already exists
+                if (list.students.includes(name)) {
+                    duplicateCount++;
+                    return;
+                }
+
+                // Add student to list
+                list.students.push(name);
+                addedCount++;
+            });
+
+            // Save the updated list
+            StorageManager.saveList(currentListId, list);
+
+            // Update UI
+            loadStudents(list.students);
+            newStudentInput.value = '';
+            newStudentInput.focus();
+
+            // Show success/warning message
+            if (addedCount > 0) {
+                let message = `Added ${addedCount} student${addedCount !== 1 ? 's' : ''}`;
+                if (duplicateCount > 0) {
+                    message += ` (${duplicateCount} duplicate${duplicateCount !== 1 ? 's' : ''} skipped)`;
+                }
+                GroupThing.showError(message, 3000);
+            } else if (duplicateCount > 0) {
+                GroupThing.showError(`All ${duplicateCount} student${duplicateCount !== 1 ? 's' : ''} already exist in the list`);
+            }
+        } else {
+            // Single student case
+            const studentName = studentInput;
+
+            // Check if student already exists
+            if (list.students.includes(studentName)) {
+                GroupThing.showError('This student is already in the list');
+                return;
+            }
+
+            // Add student to list
+            list.students.push(studentName);
+            StorageManager.saveList(currentListId, list);
+
+            // Update UI
+            loadStudents(list.students);
+            newStudentInput.value = '';
+            newStudentInput.focus();
         }
-
-        // Add student to list
-        list.students.push(studentName);
-        StorageManager.saveList(currentListId, list);
-
-        // Update UI
-        loadStudents(list.students);
-        newStudentInput.value = '';
-        newStudentInput.focus();
     }
 
     /**
