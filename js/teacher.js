@@ -680,20 +680,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add students to Class 1A
         const class1Students = [
-            'Alice Smith', 'Bob Johnson', 'Charlie Brown',
-            'Diana Prince', 'Ethan Hunt', 'Fiona Apple',
-            'George Miller', 'Hannah Baker', 'Ian Malcolm'
+            'Alice Smith', 'Bob Johnson', 'Stephen Fry',
+            'Diana Prince', 'Malala Yousafzai', 'Fiona Apple',
+            'George Miller', 'Ada Lovelace', 'Grace Hopper',
+            'Jenny Lewis', 'Maynard James', 'Nancy Drew',
+            'Emilia Airhart', 'Oscar Wilde', 'Pablo Picasso',
+            'Serena Williams', 'Ethan Hunt', 'Jacinda Ardern'
         ];
         const class1 = StorageManager.getList(class1Id);
         class1.students = class1Students;
-        class1.blacklist = [['Alice Smith', 'Bob Johnson'], ['Charlie Brown', 'Diana Prince']];
+        class1.blacklist = [['Alice Smith', 'Bob Johnson'], ['Maynard James', 'Nancy Drew']];
         class1.groupSize = 3;
         StorageManager.saveList(class1Id, class1);
 
         // Add students to Science Group
         const class2Students = [
             'Jane Foster', 'Tony Stark', 'Bruce Banner',
-            'Natasha Romanoff', 'Steve Rogers', 'Wanda Maximoff'
+            'Natasha Romanoff', 'Steve Rogers', 'Wanda Maximoff',
+            'Peter Parker', 'Scott Lang', 'Rocket Raccoon'
         ];
         const class2 = StorageManager.getList(class2Id);
         class2.students = class2Students;
@@ -703,7 +707,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add students to Book Club
         const class3Students = [
             'Harry Potter', 'Hermione Granger', 'Ron Weasley',
-            'Luna Lovegood', 'Neville Longbottom'
+            'Luna Lovegood', 'Neville Longbottom', 'Charlie Weasley',
+            'Ginny Weasley', 'Fred Weasley', 'George Weasley',
         ];
         const class3 = StorageManager.getList(class3Id);
         class3.students = class3Students;
