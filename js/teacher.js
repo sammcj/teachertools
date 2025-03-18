@@ -680,24 +680,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add students to Class 1A
         const class1Students = [
-            'Alice Smith', 'Bob Johnson', 'Stephen Fry',
+            'Alice Smith', 'Stephen Fry', 'David Attenborough',
             'Diana Prince', 'Malala Yousafzai', 'Fiona Apple',
-            'Emilia Airhart', 'Ada Lovelace', 'Grace Hopper',
             'Jenny Lewis', 'Maynard James', 'Nancy Drew',
-            'Oscar Wilde', 'Pablo Picasso', 'George Miller',
-            'Serena Williams', 'Ethan Hunt', 'Jacinda Ardern'
         ];
         const class1 = StorageManager.getList(class1Id);
         class1.students = class1Students;
-        class1.blacklist = [['Alice Smith', 'Bob Johnson'], ['Maynard James', 'Nancy Drew']];
+        class1.blacklist = [['Alice Smith', 'David Attenborough'], ['Maynard James', 'Nancy Drew']];
         class1.groupSize = 3;
         StorageManager.saveList(class1Id, class1);
 
         // Add students to Science Group
         const class2Students = [
-            'Jane Foster', 'Tony Stark', 'Bruce Banner',
-            'Natasha Romanoff', 'Steve Rogers', 'Wanda Maximoff',
-            'Peter Parker', 'Scott Lang', 'Rocket Raccoon'
+            'Jane Foster', 'Bruce Banner', 'Barry Allen',
+            'Steve Rogers', 'Wanda Maximoff', 'David Mitchell',
+            'Peter Parker', 'Scott Lang', 'Rocket Raccoon',
+            'Li Junjie', 'Wang Yichen', 'Chen Zihan'
         ];
         const class2 = StorageManager.getList(class2Id);
         class2.students = class2Students;
@@ -706,9 +704,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Add students to Book Club
         const class3Students = [
-            'Harry Potter', 'Hermione Granger', 'Ron Weasley',
-            'Luna Lovegood', 'Neville Longbottom', 'Charlie Weasley',
-            'Ginny Weasley', 'Fred Weasley', 'George Weasley',
+            'Maynard James', 'Nancy Drew', 'Charlie Weasley',
+            'Emilia Airhart', 'Ada Lovelace', 'Grace Hopper',
+            'Serena Williams', 'Ethan Hunt', 'Jacinda Ardern'
         ];
         const class3 = StorageManager.getList(class3Id);
         class3.students = class3Students;
