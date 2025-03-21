@@ -18,9 +18,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const useEmojiNamesToggle = document.getElementById('use-emoji-names-toggle');
     const blacklistPairs = document.getElementById('incompatible-pairs');
     const blacklistStudent1 = document.getElementById('incompatible-student1');
-    const blacklistStudent2 = document.getElementById('incompatible-student2');
+    const selectedIncompatibleStudents = document.getElementById('selected-incompatible-students');
+    const addIncompatibleStudentBtn = document.getElementById('add-incompatible-student-btn');
     const addBlacklistBtn = document.getElementById('add-incompatible-btn');
     const removeBlacklistBtn = document.getElementById('remove-incompatible-btn');
+    const groupingRulesHeader = document.querySelector('.incompatible-panel .collapsible-header');
+    const groupingRulesContent = document.querySelector('.incompatible-panel .section-content');
     const groupsPreviewContainer = document.getElementById('groups-preview-container');
     const listModal = document.getElementById('list-modal');
     const modalTitle = document.getElementById('modal-title');
@@ -125,6 +128,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Update student view link
     updateStudentViewLink();
 
+    // State variables for multi-student grouping rules
+    let selectedIncompatibleStudentsList = [];
+
     // Event listeners
     newListBtn.addEventListener('click', openNewListModal);
     loadSampleBtn.addEventListener('click', loadSampleData);
@@ -145,13 +151,42 @@ document.addEventListener('DOMContentLoaded', () => {
     removeStudentBtn.addEventListener('click', removeSelectedStudents);
     groupSizeInput.addEventListener('input', updateGroupSizeDisplay);
     generateGroupsBtn.addEventListener('click', generateGroups);
-    addBlacklistBtn.addEventListener('click', addBlacklistPair);
+    addIncompatibleStudentBtn.addEventListener('click', addIncompatibleStudent);
+    addBlacklistBtn.addEventListener('click', addBlacklistGroup);
     removeBlacklistBtn.addEventListener('click', removeSelectedBlacklistPairs);
     exportSettingsBtn.addEventListener('click', exportSettings);
     importSettingsBtn.addEventListener('click', openImportModal);
     confirmImportBtn.addEventListener('click', importSettings);
     cancelImportBtn.addEventListener('click', closeImportModal);
     importModal.querySelector('.close-modal').addEventListener('click', closeImportModal);
+
+    // Collapsible header for grouping rules
+    if (groupingRulesHeader) {
+        groupingRulesHeader.addEventListener('click', toggleGroupingRules);
+    }
+
+    // Student view link - close grouping rules when switching to student view
+    if (studentViewLink) {
+        studentViewLink.addEventListener('click', () => {
+            // Ensure grouping rules are collapsed when switching to student view
+            if (groupingRulesContent && !groupingRulesContent.classList.contains('collapsed')) {
+                groupingRulesContent.classList.add('collapsed');
+                if (groupingRulesHeader) {
+                    groupingRulesHeader.classList.remove('active');
+                }
+            }
+        });
+    }
+
+    /**
+     * Toggle the grouping rules section visibility
+     */
+    function toggleGroupingRules() {
+        if (groupingRulesContent) {
+            groupingRulesContent.classList.toggle('collapsed');
+            groupingRulesHeader.classList.toggle('active');
+        }
+    }
 
     /**
      * Initialise the UI with data from storage
@@ -319,20 +354,14 @@ function loadClassLists() {
         if (!list) return;
 
         // Clear existing options
-        blacklistStudent1.innerHTML = '<option value="">Select student 1</option>';
-        blacklistStudent2.innerHTML = '<option value="">Select student 2</option>';
+        blacklistStudent1.innerHTML = '<option value="">Select a student</option>';
 
         // Add each student as an option
         list.students.forEach(student => {
-            const option1 = document.createElement('option');
-            option1.value = student;
-            option1.textContent = student;
-            blacklistStudent1.appendChild(option1);
-
-            const option2 = document.createElement('option');
-            option2.value = student;
-            option2.textContent = student;
-            blacklistStudent2.appendChild(option2);
+            const option = document.createElement('option');
+            option.value = student;
+            option.textContent = student;
+            blacklistStudent1.appendChild(option);
         });
     }
 
@@ -592,11 +621,68 @@ function loadClassLists() {
     }
 
     /**
-     * Add an incompatible pair to the current list
+     * Add a student to the incompatible students list
      */
-    function addBlacklistPair() {
-        const student1 = blacklistStudent1.value;
-        const student2 = blacklistStudent2.value;
+    function addIncompatibleStudent() {
+        const student = blacklistStudent1.value;
+
+        if (!student) {
+            GroupThing.showError('Please select a student to add');
+            return;
+        }
+
+        // Check if student is already in the list
+        if (selectedIncompatibleStudentsList.includes(student)) {
+            GroupThing.showError('This student is already in the incompatible group');
+            return;
+        }
+
+        // Add to the list
+        selectedIncompatibleStudentsList.push(student);
+
+        // Update UI
+        updateSelectedIncompatibleStudentsUI();
+
+        // Clear selection
+        blacklistStudent1.value = '';
+    }
+
+    /**
+     * Update the UI to show selected incompatible students
+     */
+    function updateSelectedIncompatibleStudentsUI() {
+        selectedIncompatibleStudents.innerHTML = '';
+
+        selectedIncompatibleStudentsList.forEach(student => {
+            const tag = document.createElement('div');
+            tag.className = 'student-tag';
+            tag.innerHTML = `
+                ${student} <span class="remove-tag" data-student="${student}">×</span>
+            `;
+
+            // Add click event to remove tag
+            tag.querySelector('.remove-tag').addEventListener('click', (e) => {
+                e.stopPropagation();
+                removeIncompatibleStudent(student);
+            });
+
+            selectedIncompatibleStudents.appendChild(tag);
+        });
+    }
+
+    /**
+     * Remove a student from the incompatible students list
+     * @param {string} student - The student to remove
+     */
+    function removeIncompatibleStudent(student) {
+        selectedIncompatibleStudentsList = selectedIncompatibleStudentsList.filter(s => s !== student);
+        updateSelectedIncompatibleStudentsUI();
+    }
+
+    /**
+     * Add a group of incompatible students to the blacklist
+     */
+    function addBlacklistGroup() {
         const currentListId = StorageManager.getCurrentListId();
 
         if (!currentListId) {
@@ -604,37 +690,47 @@ function loadClassLists() {
             return;
         }
 
-        if (!student1 || !student2) {
-            GroupThing.showError('Please select both students for the incompatible pair');
-            return;
-        }
-
-        if (student1 === student2) {
-            GroupThing.showError('Please select two different students');
+        if (selectedIncompatibleStudentsList.length < 2) {
+            GroupThing.showError('Please select at least two students for the incompatible group');
             return;
         }
 
         const list = StorageManager.getList(currentListId);
         if (!list) return;
 
-        // Check if pair already exists (in either order)
-        const pairExists = list.blacklist.some(pair =>
-            (pair[0] === student1 && pair[1] === student2) ||
-            (pair[0] === student2 && pair[1] === student1));
+        // Create all possible pairs from the selected students
+        for (let i = 0; i < selectedIncompatibleStudentsList.length; i++) {
+            for (let j = i + 1; j < selectedIncompatibleStudentsList.length; j++) {
+                const student1 = selectedIncompatibleStudentsList[i];
+                const student2 = selectedIncompatibleStudentsList[j];
 
-        if (pairExists) {
-            GroupThing.showError('This incompatible pair already exists');
-            return;
+                // Check if pair already exists (in either order)
+                const pairExists = list.blacklist.some(pair =>
+                    (pair[0] === student1 && pair[1] === student2) ||
+                    (pair[0] === student2 && pair[1] === student1));
+
+                if (!pairExists) {
+                    // Add pair to incompatible pairs
+                    list.blacklist.push([student1, student2]);
+                }
+            }
         }
 
-        // Add pair to incompatible pairs
-        list.blacklist.push([student1, student2]);
+        // Save changes
         StorageManager.saveList(currentListId, list);
 
         // Update UI
         loadIncompatiblePairs(list.blacklist);
-        blacklistStudent1.value = '';
-        blacklistStudent2.value = '';
+
+        // Store count before clearing
+        const count = selectedIncompatibleStudentsList.length;
+
+        // Clear selected students
+        selectedIncompatibleStudentsList = [];
+        updateSelectedIncompatibleStudentsUI();
+
+        // Show success message
+        GroupThing.showError(`Added ${count} students to grouping rules`, 3000);
     }
 
     /**

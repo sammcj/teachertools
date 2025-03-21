@@ -88,9 +88,9 @@
         </section>
 
         <section class="incompatible-panel">
-            <h2 class="section-header">Incompatible Pairs</h2>
-            <div class="section-content">
-            <p class="help-text">Students who cannot be in the same group</p>
+            <h2 class="section-header collapsible-header">Grouping Rules <span class="collapse-icon">►</span></h2>
+            <div class="section-content collapsed">
+                <p class="help-text">Define students who should not be grouped together</p>
 
             <div class="incompatible-container">
                 <ul id="incompatible-pairs" class="incompatible-list">
@@ -100,14 +100,17 @@
 
             <div class="incompatible-controls">
                 <div class="input-group">
-                    <select id="incompatible-student1" class="dropdown">
-                        <option value="">Select student 1</option>
-                    </select>
-                    <select id="incompatible-student2" class="dropdown">
-                        <option value="">Select student 2</option>
-                    </select>
-                    <button id="add-incompatible-btn" class="btn secondary">👥 Add Pair</button>
-                    <button id="remove-incompatible-btn" class="btn danger">❌ Remove Selected</button>
+                    <div class="incompatible-students-container">
+                        <select id="incompatible-student1" class="dropdown">
+                            <option value="">Select student 1</option>
+                        </select>
+                        <div id="selected-incompatible-students" class="selected-students-tags"></div>
+                        <button id="add-incompatible-student-btn" class="btn small secondary">+ Add Student</button>
+                        </div>
+                        <div class="incompatible-actions">
+                            <button id="add-incompatible-btn" class="btn secondary">👥 Add Grouping</button>
+                            <button id="remove-incompatible-btn" class="btn danger">❌ Remove Selected</button>
+                    </div>
                 </div>
             </div>
             </div>
