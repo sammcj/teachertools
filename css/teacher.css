@@ -422,12 +422,38 @@
 
 /* Slider labels */
 .slider-labels {
-    display: flex;
-    justify-content: space-between;
+    position: relative;
     width: 100%;
     margin-top: 0.25rem;
     color: var(--text-color);
     font-size: 0.8rem;
+    height: 1.2rem;
+}
+
+.slider-labels span {
+    position: absolute;
+    transform: translateX(-50%);
+}
+
+/* Position the labels at their correct percentage positions */
+/* Account for slider padding (approximately 10px on each side) */
+.slider-labels span:nth-child(1) {
+    left: 10px; /* Position for value 1 */
+    transform: translateX(-50%);
+}
+
+.slider-labels span:nth-child(2) {
+    left: calc(28.57% + 7px); /* Position for value 5 adjusted for padding */
+}
+
+.slider-labels span:nth-child(3) {
+    left: calc(64.28% + 3px); /* Position for value 10 adjusted for padding */
+}
+
+.slider-labels span:nth-child(4) {
+    right: 10px; /* Position for value 15 */
+    left: auto;
+    transform: translateX(50%); /* Align right edge with slider end */
 }
 
 /* Group size display */
