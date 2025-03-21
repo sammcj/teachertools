@@ -9,50 +9,6 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/responsive.css">
     <style>
-        /* Inline styles for tabs - will move to CSS file later */
-        .tabs {
-            display: flex;
-            border-bottom: 2px solid var(--light-accent-color);
-            background-color: var(--background-color);
-            padding: 0 1rem;
-        }
-
-        .tab {
-            padding: 0.56rem 1.5rem; /* Reduced height by 25% (from 0.75rem to 0.56rem) */
-            cursor: pointer;
-            border-radius: 8px 8px 0 0;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            margin-right: 0.5rem;
-            background-color: var(--light-accent-color);
-            color: var(--dark-text-color);
-        }
-
-        .tab.active {
-            background-color: var(--primary-color);
-            color: white;
-        }
-
-        .tab-content {
-            display: none;
-            height: calc(100vh - 95px); /* Further reduced to account for shorter tabs */
-            width: 70%; /* Default width for desktop */
-            margin: 0 auto; /* Center the content */
-            overflow: hidden; /* Prevent double scrollbars */
-        }
-
-        /* Override for mobile */
-        @media (max-width: 768px) {
-            .tab-content {
-                width: 100% !important;
-                margin: 0 !important;
-                padding: 0 !important;
-            }
-        }
-
-        .tab-content.active {
-            display: block;
-        }
 
         .welcome-banner {
             position: absolute;
@@ -136,72 +92,21 @@
     </style>
 </head>
 <body>
-    <!-- Main header removed to save space -->
-    <div class="header-actions" style="display: flex; justify-content: flex-end; padding: 0.25rem 1rem; background-color: var(--background-color);">
-        <!-- Placeholder for future actions -->
-    </div>
-
-    <div class="tabs">
-        <div class="tab active" data-tab="groupthing">GroupThing</div>
-        <div class="tab" data-tab="coming-soon">More Tools Coming Soon</div>
-    </div>
-
-    <main style="padding: 0; max-width: 100%; width: 100%; overflow: hidden;">
+    <main style="padding: 0; max-width: 100%; width: 100%; height: 100vh; overflow: hidden; position: relative;">
         <!-- Welcome banner removed as requested -->
 
-        <div class="tab-content active" id="groupthing-tab">
-            <div id="tool-content-container" class="tool-content-container">
-                <!-- Tool content will be loaded here dynamically -->
-                <div class="loading-indicator">Loading GroupThing...</div>
-            </div>
+        <div id="tool-content-container" class="tool-content-container" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
+            <!-- Tool content will be loaded here dynamically -->
+            <div class="loading-indicator">Loading GroupThing...</div>
         </div>
 
-        <div class="tab-content" id="coming-soon-tab">
-            <div class="tools-container">
-                <div class="tool-card">
-                    <h3>Quiz Maker</h3>
-                    <p>Create interactive quizzes for your students.</p>
-                    <span class="btn secondary disabled">Coming Soon</span>
-                </div>
-                <div class="tool-card">
-                    <h3>Classroom Timer</h3>
-                    <p>Set timers for activities and transitions.</p>
-                    <span class="btn secondary disabled">Coming Soon</span>
-                </div>
-            </div>
-        </div>
+        <footer style="position: absolute; bottom: 0; width: 100%; background-color: rgba(255, 255, 255, 0.8); padding: 0.5rem; text-align: center; font-size: 0.8rem; z-index: 10;">
+            <p>All data is stored <i>locally</i> in your browser. Remember to export your config as a backup!</p>
+        </footer>
     </main>
-
-    <footer>
-        <p>All data is stored <i>locally</i> in your browser. Remember to export your config as a backup!</p>
-    </footer>
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Tab functionality
-            const tabs = document.querySelectorAll('.tab');
-            const tabContents = document.querySelectorAll('.tab-content');
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    // Remove active class from all tabs and contents
-                    tabs.forEach(t => t.classList.remove('active'));
-                    tabContents.forEach(c => c.classList.remove('active'));
-
-                    // Add active class to clicked tab
-                    tab.classList.add('active');
-
-                    // Show corresponding content
-                    const tabName = tab.getAttribute('data-tab');
-                    document.getElementById(`${tabName}-tab`).classList.add('active');
-
-                    // Load content for the selected tab
-                    if (tabName === 'groupthing') {
-                        loadToolContent('groupthing');
-                    }
-                });
-            });
-
             // Function to load tool content
             function loadToolContent(toolName) {
                 const contentContainer = document.getElementById('tool-content-container');
