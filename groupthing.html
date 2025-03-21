@@ -41,22 +41,6 @@
                 </select>
             </div>
 
-            <div class="student-management section-content">
-                <h3>Student Names:</h3>
-                <div class="student-list-container">
-                    <ul id="student-list" class="student-list">
-                        <!-- Student names will be populated here -->
-                    </ul>
-                </div>
-                <div class="student-controls">
-                    <div class="input-group">
-                        <textarea id="new-student-input" placeholder="Enter student name(s) - one per line for multiple students. (Shift+Enter for a new line)"></textarea>
-                        <button id="add-student-btn" class="btn secondary">➕ Add</button>
-                        <button id="remove-student-btn" class="btn danger">➖ Remove Selected</button>
-                    </div>
-                </div>
-            </div>
-
             <div class="group-size-control section-content">
                 <div class="group-size-row">
                     <div class="group-size-slider">
@@ -74,13 +58,31 @@
                 </div>
             </div>
 
-            <div class="generate-groups-container">
-                <button id="generate-groups-btn" class="btn primary large">🔄 Generate Groups</button>
-                <div class="emoji-names-toggle">
-                    <label for="use-emoji-names-toggle" class="toggle-label">
-                        <input type="checkbox" id="use-emoji-names-toggle" checked>
-                        <span>Use emoji names</span>
-                    </label>
+            <div class="group-controls-container">
+                <div class="generate-groups-container">
+                    <button id="generate-groups-btn" class="btn primary large">🔄 Generate Groups</button>
+                    <div class="emoji-names-toggle">
+                        <label for="use-emoji-names-toggle" class="toggle-label">
+                            <input type="checkbox" id="use-emoji-names-toggle" checked>
+                            <span>Use emoji names</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="student-management section-content">
+                <h3>Student Names:</h3>
+                <div class="student-list-container">
+                    <ul id="student-list" class="student-list">
+                        <!-- Student names will be populated here -->
+                    </ul>
+                </div>
+                <div class="student-controls">
+                    <div class="input-group">
+                        <textarea id="new-student-input" placeholder="Enter student name(s) - one per line for multiple students. (Shift+Enter for a new line)"></textarea>
+                        <button id="add-student-btn" class="btn secondary">➕ Add</button>
+                        <button id="remove-student-btn" class="btn danger">➖ Remove Selected</button>
+                    </div>
                 </div>
             </div>
         </section>

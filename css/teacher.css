@@ -39,7 +39,10 @@
     align-items: center;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    background-color: var(--background-color);
+    padding: 0.75rem;
+    border-radius: 8px;
 }
 
 .generate-groups-container .btn,
@@ -54,6 +57,11 @@
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+/* Group controls container */
+.group-controls-container {
+    margin-bottom: 1rem;
 }
 
 /* Fix incompatible controls height */
@@ -143,6 +151,8 @@
     margin-bottom: 1rem;
     max-height: 300px;
     overflow-y: auto;
+    border-bottom: 1px solid var(--light-gray);
+    padding-bottom: 0.5rem;
 }
 
 .list-actions {
@@ -156,8 +166,8 @@
 }
 
 .class-item {
-    padding: 0.75rem;
-    margin-bottom: 0.5rem;
+    padding: 0.5rem;
+    margin-bottom: 0.4rem;
     background-color: var(--background-color);
     border-radius: 4px;
     cursor: pointer;
@@ -165,6 +175,26 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+.class-item.dragging {
+    opacity: 0.5;
+    box-shadow: 0 0 8px var(--primary-color);
+}
+
+.class-item.drag-over {
+    border: 2px dashed var(--primary-color);
+    padding: calc(0.5rem - 2px);
+}
+
+.class-item .drag-handle {
+    cursor: grab;
+    margin-right: 0.5rem;
+    opacity: 0.6;
+}
+
+.class-item .drag-handle:hover {
+    opacity: 1;
 }
 
 .class-item:hover {
@@ -244,7 +274,7 @@
 }
 
 .student-item {
-    padding: 0.4rem 0.75rem;
+    padding: 0.3rem 0.5rem;
     border-bottom: 1px solid var(--light-gray);
     display: flex;
     justify-content: space-between;

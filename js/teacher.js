@@ -44,6 +44,80 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedStudents = [];
     let selectedBlacklistPairs = [];
     let editingListId = null;
+    let draggedItem = null;
+
+    // Drag and drop handlers for class list reordering
+    function handleDragStart(e) {
+        draggedItem = this;
+        this.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/html', this.innerHTML);
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        return false;
+    }
+
+    function handleDragEnter(e) {
+        this.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        this.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+        e.stopPropagation();
+        e.preventDefault();
+
+        if (draggedItem !== this) {
+            // Get the positions of the dragged item and drop target
+            const allItems = Array.from(classListContainer.querySelectorAll('.class-item'));
+            const draggedIndex = allItems.indexOf(draggedItem);
+            const dropIndex = allItems.indexOf(this);
+
+            // Reorder the items in the DOM
+            if (dropIndex < draggedIndex) {
+                classListContainer.insertBefore(draggedItem, this);
+            } else {
+                classListContainer.insertBefore(draggedItem, this.nextSibling);
+            }
+
+            // Update the order in storage
+            saveListOrder();
+        }
+
+        this.classList.remove('drag-over');
+        return false;
+    }
+
+    function handleDragEnd(e) {
+        this.classList.remove('dragging');
+        document.querySelectorAll('.class-item').forEach(item => {
+            item.classList.remove('drag-over');
+        });
+    }
+
+    /**
+     * Save the current order of class lists to storage
+     */
+    function saveListOrder() {
+        const lists = StorageManager.getLists();
+        const newOrder = {};
+
+        // Get the current order from the DOM
+        document.querySelectorAll('.class-item').forEach((item, index) => {
+            const listId = item.dataset.id;
+            if (listId && lists[listId]) {
+                newOrder[listId] = lists[listId];
+            }
+        });
+
+        // Save the new order to storage
+        StorageManager.setLists(newOrder);
+    }
 
     // Initialise the UI
     InitialiseUI();
@@ -94,49 +168,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    /**
-     * Load class lists from storage and populate UI
-     */
-    function loadClassLists() {
-        const lists = StorageManager.getLists();
+/**
+ * Load class lists from storage and populate UI
+ */
+function loadClassLists() {
+    const lists = StorageManager.getLists();
 
-        // Clear existing lists
-        classListContainer.innerHTML = '';
-        listSelector.innerHTML = '<option value="">Select a list...</option>';
+    // Clear existing lists
+    classListContainer.innerHTML = '';
+    listSelector.innerHTML = '<option value="">Select a list...</option>';
 
-        // Add each list to UI
-        for (const [id, list] of Object.entries(lists)) {
-            // Add to class list panel
-            const listItem = document.createElement('div');
-            listItem.className = 'class-item';
-            listItem.dataset.id = id;
-            listItem.innerHTML = `
-                <span>${list.name}</span>
-                <div class="class-item-actions">
-                    <button class="edit-list" title="Edit list name">✏️</button>
-                    <button class="delete-list" title="Delete list">🗑️</button>
-                </div>
-            `;
-            classListContainer.appendChild(listItem);
+    // Add each list to UI
+    for (const [id, list] of Object.entries(lists)) {
+        // Add to class list panel
+        const listItem = document.createElement('div');
+        listItem.className = 'class-item';
+        listItem.dataset.id = id;
+        listItem.draggable = true;
+        listItem.innerHTML = `
+            <span class="drag-handle">⋮⋮</span>
+            <span>${list.name}</span>
+            <div class="class-item-actions">
+                <button class="edit-list" title="Edit list name">✏️</button>
+                <button class="delete-list" title="Delete list">🗑️</button>
+            </div>
+        `;
+        classListContainer.appendChild(listItem);
 
-            // Add click event to select list
-            listItem.addEventListener('click', (e) => {
-                if (!e.target.closest('.class-item-actions')) {
-                    selectList(id);
-                }
-            });
+        // Add click event to select list
+        listItem.addEventListener('click', (e) => {
+            if (!e.target.closest('.class-item-actions') && !e.target.closest('.drag-handle')) {
+                selectList(id);
+            }
+        });
 
-            // Add edit and delete events
-            listItem.querySelector('.edit-list').addEventListener('click', () => openEditListModal(id, list.name));
-            listItem.querySelector('.delete-list').addEventListener('click', () => deleteList(id));
+        // Add edit and delete events
+        listItem.querySelector('.edit-list').addEventListener('click', () => openEditListModal(id, list.name));
+        listItem.querySelector('.delete-list').addEventListener('click', () => deleteList(id));
 
-            // Add to dropdown
-            const option = document.createElement('option');
-            option.value = id;
-            option.textContent = list.name;
-            listSelector.appendChild(option);
-        }
+        // Add drag events
+        listItem.addEventListener('dragstart', handleDragStart);
+        listItem.addEventListener('dragover', handleDragOver);
+        listItem.addEventListener('dragenter', handleDragEnter);
+        listItem.addEventListener('dragleave', handleDragLeave);
+        listItem.addEventListener('drop', handleDrop);
+        listItem.addEventListener('dragend', handleDragEnd);
+
+        // Add to dropdown
+        const option = document.createElement('option');
+        option.value = id;
+        option.textContent = list.name;
+        listSelector.appendChild(option);
     }
+}
 
     /**
      * Load the current list data

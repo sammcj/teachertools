@@ -59,6 +59,16 @@ const StorageManager = {
     },
 
     /**
+     * Set all class lists
+     * @param {Object} lists - The lists object to save
+     */
+    setLists(lists) {
+        const data = this.getData();
+        data.lists = lists;
+        this.saveData(data);
+    },
+
+    /**
      * Get a specific class list by ID
      * @param {string} listId - The ID of the list to get
      * @returns {Object|null} The class list or null if not found
