@@ -318,7 +318,11 @@
 }
 
 .group-size-control {
-    margin-bottom: 1.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    background-color: var(--background-color);
+    padding: 0.75rem;
+    border-radius: 8px;
 }
 
 /* Slider container */
