@@ -80,6 +80,14 @@ class TeacherApp {
     this.confirmImportBtn = document.getElementById('confirm-import-btn');
     this.cancelImportBtn = document.getElementById('cancel-import-btn');
     this.importModalClose = document.getElementById('import-modal-close');
+
+    this.groupEditModal = document.getElementById('group-edit-modal');
+    this.groupEditModalTitle = document.getElementById('group-edit-modal-title');
+    this.groupEditStudents = document.getElementById('group-edit-students');
+    this.groupEditAvailableStudents = document.getElementById('group-edit-available-students');
+    this.saveGroupBtn = document.getElementById('save-group-btn');
+    this.cancelGroupEditBtn = document.getElementById('cancel-group-edit-btn');
+    this.groupEditModalClose = document.getElementById('group-edit-modal-close');
   }
 
   bindEvents() {
@@ -121,6 +129,10 @@ class TeacherApp {
     this.listModalClose.addEventListener('click', () => this.closeListModal());
     this.cancelImportBtn.addEventListener('click', () => this.closeImportModal());
     this.importModalClose.addEventListener('click', () => this.closeImportModal());
+    this.saveGroupBtn.addEventListener('click', () => this.saveGroupEdit());
+    this.cancelGroupEditBtn.addEventListener('click', () => this.closeGroupEditModal());
+    this.groupEditModalClose.addEventListener('click', () => this.closeGroupEditModal());
+    this.groupEditAvailableStudents.addEventListener('change', () => this.addStudentToGroup());
 
     // Click outside modals to close
     this.listModal.addEventListener('click', (e) => {
@@ -128,6 +140,9 @@ class TeacherApp {
     });
     this.importModal.addEventListener('click', (e) => {
       if (e.target === this.importModal) this.closeImportModal();
+    });
+    this.groupEditModal.addEventListener('click', (e) => {
+      if (e.target === this.groupEditModal) this.closeGroupEditModal();
     });
   }
 
@@ -590,11 +605,23 @@ class TeacherApp {
       const groupName = Groups.getGroupName(index, useEmoji);
 
       card.innerHTML = `
-        <h4 class="text-base font-semibold mb-xs text-primary">${groupName}</h4>
+        <div class="flex items-center justify-between mb-xs">
+          <h4 class="text-base font-semibold text-primary">${groupName}</h4>
+          <button class="btn btn-xs btn-secondary edit-group-btn" data-group-index="${index}" title="Edit group">
+            ✏️
+          </button>
+        </div>
         <ul class="stack-xs">
           ${group.map(student => `<li class="text-sm">${student}</li>`).join('')}
         </ul>
       `;
+
+      // Add click handler for edit button
+      const editBtn = card.querySelector('.edit-group-btn');
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.openGroupEditModal(index, group, groupName);
+      });
 
       this.groupsPreview.appendChild(card);
     });
@@ -869,6 +896,114 @@ class TeacherApp {
     Utils.showToast(`Removed ${this.selectedRulesForRemoval.length} rule(s)`, 'success');
     this.selectedRulesForRemoval = [];
     this.loadIncompatiblePairs(list.pairingRules);
+  }
+
+  // Group Editing Methods
+
+  openGroupEditModal(groupIndex, group, groupName) {
+    this.editingGroupIndex = groupIndex;
+    this.editingGroupMembers = [...group];
+
+    this.groupEditModalTitle.textContent = `Edit ${groupName}`;
+
+    // Display current group members
+    this.renderGroupEditStudents();
+
+    // Populate available students dropdown
+    const list = Storage.getList(this.currentListId);
+    if (!list) return;
+
+    this.groupEditAvailableStudents.innerHTML = '<option value="">Select student to add...</option>';
+
+    // Get all students and filter out those already in the group
+    const allStudents = list.students;
+    const availableStudents = allStudents.filter(s => !this.editingGroupMembers.includes(s));
+
+    availableStudents.forEach(student => {
+      const option = document.createElement('option');
+      option.value = student;
+      option.textContent = student;
+      this.groupEditAvailableStudents.appendChild(option);
+    });
+
+    this.groupEditModal.classList.add('active');
+  }
+
+  renderGroupEditStudents() {
+    this.groupEditStudents.innerHTML = '';
+
+    if (this.editingGroupMembers.length === 0) {
+      this.groupEditStudents.innerHTML = '<div class="empty-state"><p class="text-sm">No students in this group</p></div>';
+      return;
+    }
+
+    this.editingGroupMembers.forEach(student => {
+      const card = document.createElement('div');
+      card.className = 'card p-sm flex items-center justify-between';
+      card.innerHTML = `
+        <span class="text-sm">${student}</span>
+        <button class="btn btn-xs btn-danger remove-from-group-btn" data-student="${student}" title="Remove from group">
+          ✕
+        </button>
+      `;
+
+      const removeBtn = card.querySelector('.remove-from-group-btn');
+      removeBtn.addEventListener('click', () => this.removeStudentFromGroup(student));
+
+      this.groupEditStudents.appendChild(card);
+    });
+  }
+
+  addStudentToGroup() {
+    const student = this.groupEditAvailableStudents.value;
+    if (!student) return;
+
+    if (!this.editingGroupMembers.includes(student)) {
+      this.editingGroupMembers.push(student);
+      this.renderGroupEditStudents();
+
+      // Update available students dropdown
+      this.groupEditAvailableStudents.remove(this.groupEditAvailableStudents.selectedIndex);
+      this.groupEditAvailableStudents.value = '';
+    }
+  }
+
+  removeStudentFromGroup(student) {
+    this.editingGroupMembers = this.editingGroupMembers.filter(s => s !== student);
+    this.renderGroupEditStudents();
+
+    // Add back to available students dropdown
+    const option = document.createElement('option');
+    option.value = student;
+    option.textContent = student;
+    this.groupEditAvailableStudents.appendChild(option);
+  }
+
+  saveGroupEdit() {
+    if (this.editingGroupMembers.length === 0) {
+      Utils.showToast('Group must have at least one student', 'error');
+      return;
+    }
+
+    const list = Storage.getList(this.currentListId);
+    if (!list || !list.groups) return;
+
+    // Update the group
+    list.groups[this.editingGroupIndex] = [...this.editingGroupMembers];
+
+    Storage.updateList(this.currentListId, { groups: list.groups });
+
+    Utils.showToast('Group updated successfully', 'success');
+    this.closeGroupEditModal();
+
+    // Refresh the display
+    this.displayGroups(list.groups, list.useEmojiNames);
+  }
+
+  closeGroupEditModal() {
+    this.groupEditModal.classList.remove('active');
+    this.editingGroupIndex = null;
+    this.editingGroupMembers = [];
   }
 
   // Export/Import Methods
