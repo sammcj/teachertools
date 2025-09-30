@@ -939,7 +939,8 @@ class TeacherApp {
 
     this.editingGroupMembers.forEach(student => {
       const card = document.createElement('div');
-      card.className = 'card p-sm flex items-center justify-between';
+      card.className = 'card flex items-center justify-between';
+      card.style.padding = 'var(--space-xs) var(--space-sm)';
       card.innerHTML = `
         <span class="text-sm">${student}</span>
         <button class="btn btn-xs btn-danger remove-from-group-btn" data-student="${student}" title="Remove from group">
