@@ -86,119 +86,127 @@
         </aside>
 
         <!-- Main content area -->
-        <div class="sidebar-content stack-lg">
-          <!-- Current List Panel -->
-          <section class="panel">
-            <div class="panel-header flex items-center justify-between">
-              <h2 class="panel-title">
-                <span id="current-list-name">Select a Class List</span>
-              </h2>
-              <select id="list-selector" class="dropdown" style="max-width: 200px;">
-                <option value="">Select a list...</option>
-              </select>
-            </div>
-
-            <!-- Group Generation Controls -->
-            <div id="group-controls" class="hidden">
-              <div class="stack">
-                <!-- Generate Button and Emoji Toggle -->
-                <div class="flex items-center justify-between gap-md">
-                  <button id="generate-btn" class="btn btn-lg btn-primary">
-                    🔄 Generate Groups
-                  </button>
-                  <label class="checkbox">
-                    <input type="checkbox" id="emoji-toggle" checked>
-                    <span>Use emoji names</span>
-                  </label>
+        <div class="sidebar-content">
+          <div class="grid grid-2 gap-lg">
+            <!-- Left Column -->
+            <div class="stack-lg">
+              <!-- Current List Panel -->
+              <section class="panel">
+                <div class="panel-header flex items-center justify-between">
+                  <h2 class="panel-title">
+                    <span id="current-list-name">Select a Class List</span>
+                  </h2>
+                  <select id="list-selector" class="dropdown" style="max-width: 200px;">
+                    <option value="">Select a list...</option>
+                  </select>
                 </div>
 
-                <!-- Group Size Slider -->
-                <div>
-                  <div class="flex items-center justify-between mb-sm">
-                    <label class="font-semibold">Group Size:</label>
-                    <span id="group-size-display" class="text-lg font-bold text-primary">3</span>
+                <!-- Group Generation Controls -->
+                <div id="group-controls" class="hidden">
+                  <div class="stack">
+                    <!-- Generate Button and Emoji Toggle -->
+                    <div class="flex items-center justify-between gap-md">
+                      <button id="generate-btn" class="btn btn-lg btn-primary">
+                        🔄 Generate Groups
+                      </button>
+                      <label class="checkbox">
+                        <input type="checkbox" id="emoji-toggle" checked>
+                        <span>Use emoji names</span>
+                      </label>
+                    </div>
+
+                    <!-- Group Size Slider -->
+                    <div>
+                      <div class="flex items-center justify-between mb-sm">
+                        <label class="font-semibold">Group Size:</label>
+                        <span id="group-size-display" class="text-lg font-bold text-primary">3</span>
+                      </div>
+                      <input
+                        type="range"
+                        id="group-size-slider"
+                        min="1"
+                        max="15"
+                        value="3"
+                        class="w-full"
+                        style="accent-color: var(--lavender);">
+                      <div class="flex justify-between text-xs text-secondary mt-xs">
+                        <span>1</span>
+                        <span>15</span>
+                      </div>
+                    </div>
                   </div>
-                  <input
-                    type="range"
-                    id="group-size-slider"
-                    min="1"
-                    max="15"
-                    value="3"
-                    class="w-full"
-                    style="accent-color: var(--lavender);">
-                  <div class="flex justify-between text-xs text-secondary mt-xs">
-                    <span>1</span>
-                    <span>15</span>
+                </div>
+              </section>
+
+              <!-- Incompatible Pairs Panel -->
+              <section id="rules-panel" class="panel hidden">
+                <div id="rules-header" class="panel-header flex items-center justify-between cursor-pointer">
+                  <div class="flex items-center gap-sm">
+                    <h2 class="panel-title">Pairing Rules</h2>
+                    <span id="rules-count" class="badge">0 rules</span>
+                  </div>
+                  <span id="rules-toggle" class="text-secondary">▼</span>
+                </div>
+
+                <div id="rules-content" class="hidden">
+                  <div class="stack">
+                    <div id="incompatible-list" class="stack-sm mb-md" style="max-height: 200px; overflow-y: auto;">
+                      <!-- Incompatible pairs will be listed here -->
+                    </div>
+
+                    <label class="font-semibold text-sm mb-xs">Add New Rule:</label>
+                    <select id="student-selector" class="dropdown">
+                      <option value="">Select students to keep apart...</option>
+                    </select>
+
+                    <div id="selected-students" class="flex flex-wrap gap-sm mb-sm">
+                      <!-- Selected students for new rule -->
+                    </div>
+
+                    <div class="flex gap-sm">
+                      <button id="add-rule-btn" class="btn btn-primary w-full">
+                        ➕ Add Rule
+                      </button>
+                      <button id="remove-rule-btn" class="btn btn-danger w-full">
+                        ➖ Remove Selected
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          </section>
+              </section>
 
-          <!-- Students Panel -->
-          <section id="student-panel" class="panel hidden">
-            <h2 class="panel-title mb-md">Students</h2>
-            <div class="stack">
-              <div class="flex gap-sm">
-                <input
-                  type="text"
-                  id="student-input"
-                  class="input"
-                  placeholder="Enter student name (or multiple, comma-separated)"
-                  autocomplete="off">
-                <button id="add-student-btn" class="btn btn-primary">
-                  ➕ Add
-                </button>
-              </div>
-              <div id="student-list" class="grid grid-2 gap-sm"></div>
-              <button id="remove-student-btn" class="btn btn-sm btn-danger w-full">
-                ➖ Remove Selected
-              </button>
-            </div>
-          </section>
-
-          <!-- Incompatible Pairs Panel -->
-          <section id="rules-panel" class="panel hidden">
-            <div id="rules-header" class="panel-header flex items-center justify-between cursor-pointer">
-              <div class="flex items-center gap-sm">
-                <h2 class="panel-title">Pairing Rules</h2>
-                <span id="rules-count" class="badge">0 rules</span>
-              </div>
-              <span id="rules-toggle" class="text-secondary">▼</span>
+              <!-- Generated Groups Panel -->
+              <section id="groups-panel" class="panel hidden">
+                <h2 class="panel-title mb-md">Generated Groups</h2>
+                <div id="groups-preview" class="grid grid-2 gap-md"></div>
+              </section>
             </div>
 
-            <div id="rules-content" class="hidden">
-              <div class="stack">
-                <div id="incompatible-list" class="stack-sm mb-md" style="max-height: 200px; overflow-y: auto;">
-                  <!-- Incompatible pairs will be listed here -->
-                </div>
-
-                <label class="font-semibold text-sm mb-xs">Add New Rule:</label>
-                <select id="student-selector" class="dropdown">
-                  <option value="">Select students to keep apart...</option>
-                </select>
-
-                <div id="selected-students" class="flex flex-wrap gap-sm mb-sm">
-                  <!-- Selected students for new rule -->
-                </div>
-
-                <div class="flex gap-sm">
-                  <button id="add-rule-btn" class="btn btn-primary w-full">
-                    ➕ Add Rule
-                  </button>
-                  <button id="remove-rule-btn" class="btn btn-danger w-full">
+            <!-- Right Column -->
+            <div class="stack-lg">
+              <!-- Students Panel -->
+              <section id="student-panel" class="panel hidden">
+                <h2 class="panel-title mb-md">Students</h2>
+                <div class="stack">
+                  <div class="flex gap-sm">
+                    <input
+                      type="text"
+                      id="student-input"
+                      class="input"
+                      placeholder="Enter student name (or multiple, comma-separated)"
+                      autocomplete="off">
+                    <button id="add-student-btn" class="btn btn-primary">
+                      ➕ Add
+                    </button>
+                  </div>
+                  <div id="student-list" class="grid grid-2 gap-sm"></div>
+                  <button id="remove-student-btn" class="btn btn-sm btn-danger w-full">
                     ➖ Remove Selected
                   </button>
                 </div>
-              </div>
+              </section>
             </div>
-          </section>
-
-          <!-- Generated Groups Panel -->
-          <section id="groups-panel" class="panel hidden">
-            <h2 class="panel-title mb-md">Generated Groups</h2>
-            <div id="groups-preview" class="grid grid-3 gap-md"></div>
-          </section>
+          </div>
         </div>
       </div>
     </div>
