@@ -100,7 +100,7 @@ const Storage = {
     data.lists[listId] = {
       name,
       students: [],
-      incompatiblePairs: [],
+      pairingRules: [], // Changed from incompatiblePairs to support both types
       groupSize: 3,
       groups: null,
       useEmojiNames: true
@@ -261,9 +261,10 @@ const Storage = {
         'Diana Prince', 'Emma Watson', 'Frank Miller',
         'Grace Hopper', 'Henry Ford', 'Iris West'
       ],
-      incompatiblePairs: [
-        ['Alice Smith', 'Charlie Brown'],
-        ['Bob Johnson', 'Frank Miller']
+      pairingRules: [
+        { type: 'never', students: ['Alice Smith', 'Charlie Brown'] },
+        { type: 'never', students: ['Bob Johnson', 'Frank Miller'] },
+        { type: 'always', students: ['Grace Hopper', 'Henry Ford'] }
       ],
       groupSize: 3,
       groups: null,
@@ -278,7 +279,7 @@ const Storage = {
         'Jane Foster', 'Bruce Banner', 'Peter Parker',
         'Tony Stark', 'Natasha Romanoff', 'Steve Rogers'
       ],
-      incompatiblePairs: [],
+      pairingRules: [],
       groupSize: 3,
       groups: null,
       useEmojiNames: true

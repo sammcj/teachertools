@@ -87,7 +87,7 @@ class StudentView {
     }
     if (this.groupsContainer) {
       this.groupsContainer.classList.remove('hidden');
-      this.groupsContainer.style.display = 'flex';
+      this.groupsContainer.style.display = 'grid';
       this.groupsContainer.innerHTML = '';
     }
 

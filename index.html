@@ -153,12 +153,24 @@
                 <div id="rules-content" class="hidden">
                   <div class="stack">
                     <div id="incompatible-list" class="stack-sm mb-md" style="max-height: 200px; overflow-y: auto;">
-                      <!-- Incompatible pairs will be listed here -->
+                      <!-- Rules will be listed here -->
                     </div>
 
                     <label class="font-semibold text-sm mb-xs">Add New Rule:</label>
+
+                    <div class="flex gap-sm mb-sm">
+                      <label class="checkbox">
+                        <input type="radio" name="rule-type" id="rule-type-never" value="never" checked>
+                        <span>❌ Never together</span>
+                      </label>
+                      <label class="checkbox">
+                        <input type="radio" name="rule-type" id="rule-type-always" value="always">
+                        <span>✅ Always together</span>
+                      </label>
+                    </div>
+
                     <select id="student-selector" class="dropdown">
-                      <option value="">Select students to keep apart...</option>
+                      <option value="">Select students...</option>
                     </select>
 
                     <div id="selected-students" class="flex flex-wrap gap-sm mb-sm">

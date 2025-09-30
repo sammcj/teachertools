@@ -448,7 +448,13 @@ class TeacherApp {
     const list = Storage.getList(this.currentListId);
     if (!list) return;
 
-    const names = input.split('\n').map(n => n.trim()).filter(n => n);
+    // Split by newlines first, then by commas
+    const names = input
+      .split('\n')
+      .flatMap(line => line.split(','))
+      .map(n => n.trim())
+      .filter(n => n);
+
     let addedCount = 0;
     let duplicateCount = 0;
 

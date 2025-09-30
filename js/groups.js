@@ -80,19 +80,21 @@ const Groups = {
       groups[i % numGroups].push(student);
     });
 
-    // Safety check: merge any single-person groups
-    const singleGroups = groups.filter(g => g.length === 1);
-    if (singleGroups.length > 0) {
-      singleGroups.forEach(singleGroup => {
-        const multiGroups = groups.filter(g => g !== singleGroup && g.length > 1);
-        if (multiGroups.length > 0) {
-          // Add to smallest group
-          multiGroups.sort((a, b) => a.length - b.length);
-          multiGroups[0].push(singleGroup[0]);
-        }
-      });
-      // Remove single-person groups
-      return groups.filter(g => g.length > 1);
+    // Safety check: merge any single-person groups (unless group size is intentionally 1)
+    if (groupSize > 1) {
+      const singleGroups = groups.filter(g => g.length === 1);
+      if (singleGroups.length > 0) {
+        singleGroups.forEach(singleGroup => {
+          const multiGroups = groups.filter(g => g !== singleGroup && g.length > 1);
+          if (multiGroups.length > 0) {
+            // Add to smallest group
+            multiGroups.sort((a, b) => a.length - b.length);
+            multiGroups[0].push(singleGroup[0]);
+          }
+        });
+        // Remove single-person groups
+        return groups.filter(g => g.length > 1);
+      }
     }
 
     return groups;
