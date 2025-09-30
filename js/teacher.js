@@ -810,7 +810,8 @@ class TeacherApp {
 
     rules.forEach((rule, index) => {
       const div = document.createElement('div');
-      div.className = 'card p-sm cursor-pointer transition';
+      div.className = 'card cursor-pointer transition';
+      div.style.padding = 'var(--space-xs) var(--space-sm)';
       div.dataset.ruleIndex = index;
 
       // Handle old format (simple array) vs new format (object with type)

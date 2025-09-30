@@ -86,6 +86,7 @@
   padding: var(--space-lg);
   box-shadow: var(--shadow-md);
   transition: all var(--transition-base);
+  border: 2px solid transparent;
 }
 
 .card:hover {
@@ -93,13 +94,32 @@
   transform: translateY(-2px);
 }
 
+/* Clickable cards - make them look more button-like */
+.card.cursor-pointer {
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+}
+
+.card.cursor-pointer:hover {
+  border-color: var(--lavender);
+  background-color: #fafbff;
+}
+
+.card.cursor-pointer:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
 /* Compact group cards */
 .group-card {
   padding: var(--space-sm) var(--space-md);
+  border: 2px solid var(--border-color);
 }
 
 .group-card:hover {
   transform: translateY(-1px);
+  border-color: var(--lavender);
+  background-color: #fafbff;
 }
 
 .card-header {
@@ -130,8 +150,8 @@
 }
 
 .input:focus {
-  outline: none;
   border-color: var(--lavender);
+  outline: none;
   box-shadow: 0 0 0 3px rgba(184, 192, 255, 0.2);
 }
 
@@ -156,6 +176,11 @@ textarea.input {
   cursor: pointer;
   transition: all var(--transition-fast);
   min-height: 44px;
+}
+
+.dropdown:hover {
+  border-color: var(--lavender);
+  background-color: #fafbff;
 }
 
 .dropdown:focus {
