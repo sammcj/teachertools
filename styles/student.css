@@ -11,9 +11,10 @@ body {
 /* Header */
 .student-header {
   background-color: var(--bg-secondary);
-  padding: var(--space-lg);
-  box-shadow: var(--shadow-md);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-sm);
   margin-bottom: var(--space-xl);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .student-header .container {
