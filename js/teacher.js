@@ -583,8 +583,9 @@ class TeacherApp {
 
     groups.forEach((group, index) => {
       const card = document.createElement('div');
-      card.className = 'card group-card animate__animated animate__bounceIn';
-      card.style.animationDelay = `${index * 0.1}s`;
+      card.className = 'card group-card animate__animated animate__fadeInUp';
+      card.style.animationDelay = `${index * 0.025}s`;
+      card.style.animationDuration = '0.3s';
 
       const groupName = Groups.getGroupName(index, useEmoji);
 
