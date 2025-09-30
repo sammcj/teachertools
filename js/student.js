@@ -109,8 +109,9 @@ class StudentView {
 
   createGroupBubble(group, index, useEmoji) {
     const bubble = document.createElement('div');
-    bubble.className = 'group-bubble animate__animated animate__bounceIn';
-    bubble.style.animationDelay = `${index * 0.1}s`;
+    bubble.className = 'group-bubble animate__animated animate__fadeInUp';
+    bubble.style.animationDelay = `${index * 0.05}s`;
+    bubble.style.animationDuration = '0.4s';
 
     const groupName = Groups.getGroupName(index, useEmoji);
 
