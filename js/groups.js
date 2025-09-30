@@ -5,7 +5,7 @@
 
 const Groups = {
   /**
-   * Animal emojis for group names
+   * Animal emojis for group names (expanded to support 25+ groups)
    */
   animals: [
     { emoji: '🦘', name: 'Kangaroos' },
@@ -23,7 +23,21 @@ const Groups = {
     { emoji: '🦅', name: 'Eagles' },
     { emoji: '🐢', name: 'Turtles' },
     { emoji: '🐯', name: 'Tigers' },
-    { emoji: '🦊', name: 'Foxes' }
+    { emoji: '🦊', name: 'Foxes' },
+    { emoji: '🐺', name: 'Wolves' },
+    { emoji: '🦇', name: 'Bats' },
+    { emoji: '🦋', name: 'Butterflies' },
+    { emoji: '🐝', name: 'Bees' },
+    { emoji: '🦎', name: 'Lizards' },
+    { emoji: '🐍', name: 'Snakes' },
+    { emoji: '🦆', name: 'Ducks' },
+    { emoji: '🦢', name: 'Swans' },
+    { emoji: '🐧', name: 'Penguins' },
+    { emoji: '🦩', name: 'Flamingos' },
+    { emoji: '🦚', name: 'Peacocks' },
+    { emoji: '🦜', name: 'Parrots' },
+    { emoji: '🐳', name: 'Whales' },
+    { emoji: '🦈', name: 'Sharks' }
   ],
 
   /**
@@ -39,16 +53,48 @@ const Groups = {
   },
 
   /**
-   * Check if groups satisfy incompatible pair constraints
+   * Check if groups satisfy pairing rule constraints
    */
-  isValid(groups, incompatiblePairs) {
-    if (!incompatiblePairs || incompatiblePairs.length === 0) {
+  isValid(groups, pairingRules) {
+    if (!pairingRules || pairingRules.length === 0) {
       return true;
     }
 
-    for (const group of groups) {
-      for (const [student1, student2] of incompatiblePairs) {
-        if (group.includes(student1) && group.includes(student2)) {
+    for (const rule of pairingRules) {
+      // Handle old format (simple array of pairs)
+      if (Array.isArray(rule) && !rule.type) {
+        const [student1, student2] = rule;
+        for (const group of groups) {
+          if (group.includes(student1) && group.includes(student2)) {
+            return false; // Old format = never together
+          }
+        }
+        continue;
+      }
+
+      // Handle new format with type field
+      if (rule.type === 'never') {
+        // Check that no group contains all these students together
+        for (const group of groups) {
+          const allInGroup = rule.students.every(s => group.includes(s));
+          if (allInGroup) {
+            return false;
+          }
+        }
+      } else if (rule.type === 'always') {
+        // Check that all students in this rule are in the same group
+        const studentsInRule = rule.students;
+        let foundGroupWithAll = false;
+
+        for (const group of groups) {
+          const allInThisGroup = studentsInRule.every(s => group.includes(s));
+          if (allInThisGroup) {
+            foundGroupWithAll = true;
+            break;
+          }
+        }
+
+        if (!foundGroupWithAll) {
           return false;
         }
       }
@@ -103,7 +149,7 @@ const Groups = {
   /**
    * Generate groups with constraints
    */
-  generate(students, groupSize, incompatiblePairs = []) {
+  generate(students, groupSize, pairingRules = []) {
     if (!students || students.length === 0) {
       return [];
     }
@@ -116,7 +162,7 @@ const Groups = {
       const shuffled = this.shuffle(students);
       const groups = this.distribute(shuffled, groupSize);
 
-      if (this.isValid(groups, incompatiblePairs)) {
+      if (this.isValid(groups, pairingRules)) {
         return { groups, constraintsSatisfied: true };
       }
 
@@ -124,7 +170,7 @@ const Groups = {
     }
 
     // If we can't satisfy constraints, return best attempt
-    console.warn('Could not satisfy all incompatible pair constraints after 50 attempts');
+    console.warn('Could not satisfy all pairing rule constraints after 50 attempts');
     const shuffled = this.shuffle(students);
     return {
       groups: this.distribute(shuffled, groupSize),

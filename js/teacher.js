@@ -55,6 +55,8 @@ class TeacherApp {
     this.selectedStudentsContainer = document.getElementById('selected-students');
     this.addRuleBtn = document.getElementById('add-rule-btn');
     this.removeRuleBtn = document.getElementById('remove-rule-btn');
+    this.ruleTypeNever = document.getElementById('rule-type-never');
+    this.ruleTypeAlways = document.getElementById('rule-type-always');
 
     // Action buttons
     this.newListBtn = document.getElementById('new-list-btn');
@@ -301,7 +303,7 @@ class TeacherApp {
     this.emojiToggle.checked = list.useEmojiNames;
 
     this.loadStudents(list.students);
-    this.loadIncompatiblePairs(list.incompatiblePairs);
+    this.loadIncompatiblePairs(list.pairingRules || list.incompatiblePairs || []);
     this.updateStudentSelector(list.students);
 
     if (list.groups) {
@@ -491,14 +493,21 @@ class TeacherApp {
 
     list.students = list.students.filter(s => !this.selectedStudents.includes(s));
 
-    // Also remove from incompatible pairs
-    list.incompatiblePairs = list.incompatiblePairs.filter(([s1, s2]) =>
-      !this.selectedStudents.includes(s1) && !this.selectedStudents.includes(s2)
+    // Also remove from pairing rules
+    if (!list.pairingRules && list.incompatiblePairs) {
+      list.pairingRules = list.incompatiblePairs.map(pair => ({
+        type: 'never',
+        students: pair
+      }));
+    }
+
+    list.pairingRules = list.pairingRules.filter(rule =>
+      rule.students.every(s => !this.selectedStudents.includes(s))
     );
 
     Storage.updateList(this.currentListId, {
       students: list.students,
-      incompatiblePairs: list.incompatiblePairs
+      pairingRules: list.pairingRules
     });
 
     Utils.showToast(`Removed ${this.selectedStudents.length} student(s)`, 'success');
@@ -539,10 +548,19 @@ class TeacherApp {
       return;
     }
 
+    // Migrate old format if needed
+    if (!list.pairingRules && list.incompatiblePairs) {
+      list.pairingRules = list.incompatiblePairs.map(pair => ({
+        type: 'never',
+        students: pair
+      }));
+      Storage.updateList(this.currentListId, { pairingRules: list.pairingRules });
+    }
+
     const result = Groups.generate(
       list.students,
       list.groupSize,
-      list.incompatiblePairs
+      list.pairingRules || []
     );
 
     const groups = result.groups || result;
@@ -641,49 +659,114 @@ class TeacherApp {
     const list = Storage.getList(this.currentListId);
     if (!list) return;
 
-    // Create all pairwise combinations
-    let addedCount = 0;
-    for (let i = 0; i < this.selectedIncompatible.length; i++) {
-      for (let j = i + 1; j < this.selectedIncompatible.length; j++) {
-        const pair = [this.selectedIncompatible[i], this.selectedIncompatible[j]];
+    // Get rule type
+    const ruleType = this.ruleTypeNever.checked ? 'never' : 'always';
 
-        // Check if pair already exists
-        const exists = list.incompatiblePairs.some(([s1, s2]) =>
-          (s1 === pair[0] && s2 === pair[1]) || (s1 === pair[1] && s2 === pair[0])
-        );
-
-        if (!exists) {
-          list.incompatiblePairs.push(pair);
-          addedCount++;
-        }
-      }
+    // Initialise pairingRules if it doesn't exist (for old data)
+    if (!list.pairingRules) {
+      list.pairingRules = [];
     }
 
-    Storage.updateList(this.currentListId, { incompatiblePairs: list.incompatiblePairs });
+    if (ruleType === 'always') {
+      // For "always together" rules, store all students as a single rule
+      const rule = {
+        type: 'always',
+        students: [...this.selectedIncompatible]
+      };
 
-    if (addedCount > 0) {
-      Utils.showToast(`Added ${addedCount} pairing rule(s)`, 'success');
+      // Check if this exact rule already exists
+      const exists = list.pairingRules.some(r =>
+        r.type === 'always' &&
+        r.students.length === rule.students.length &&
+        r.students.every(s => rule.students.includes(s))
+      );
+
+      if (!exists) {
+        list.pairingRules.push(rule);
+        Storage.updateList(this.currentListId, { pairingRules: list.pairingRules });
+        Utils.showToast('Added "always together" rule', 'success');
+      } else {
+        Utils.showToast('This rule already exists', 'warning');
+      }
+    } else {
+      // For "never together" rules, create pairwise combinations
+      let addedCount = 0;
+      for (let i = 0; i < this.selectedIncompatible.length; i++) {
+        for (let j = i + 1; j < this.selectedIncompatible.length; j++) {
+          const rule = {
+            type: 'never',
+            students: [this.selectedIncompatible[i], this.selectedIncompatible[j]]
+          };
+
+          // Check if this pair already exists
+          const exists = list.pairingRules.some(r =>
+            r.type === 'never' &&
+            r.students.length === 2 &&
+            ((r.students[0] === rule.students[0] && r.students[1] === rule.students[1]) ||
+             (r.students[0] === rule.students[1] && r.students[1] === rule.students[0]))
+          );
+
+          if (!exists) {
+            list.pairingRules.push(rule);
+            addedCount++;
+          }
+        }
+      }
+
+      Storage.updateList(this.currentListId, { pairingRules: list.pairingRules });
+
+      if (addedCount > 0) {
+        Utils.showToast(`Added ${addedCount} "never together" rule(s)`, 'success');
+      } else {
+        Utils.showToast('All rules already exist', 'warning');
+      }
     }
 
     this.selectedIncompatible = [];
     this.renderSelectedStudents();
-    this.loadIncompatiblePairs(list.incompatiblePairs);
+    this.loadIncompatiblePairs(list.pairingRules);
   }
 
-  loadIncompatiblePairs(pairs) {
+  loadIncompatiblePairs(rules) {
     this.incompatibleList.innerHTML = '';
     this.selectedRulesForRemoval = [];
 
-    if (pairs.length === 0) {
+    // Handle both old format (arrays) and new format (objects)
+    if (!rules) {
+      rules = [];
+    }
+
+    if (rules.length === 0) {
       this.incompatibleList.innerHTML = '<div class="empty-state"><p class="text-sm">No rules yet</p></div>';
       return;
     }
 
-    pairs.forEach((pair, index) => {
+    rules.forEach((rule, index) => {
       const div = document.createElement('div');
       div.className = 'card p-sm cursor-pointer transition';
-      div.textContent = `${pair[0]} & ${pair[1]}`;
-      div.dataset.pairIndex = index;
+      div.dataset.ruleIndex = index;
+
+      // Handle old format (simple array) vs new format (object with type)
+      let icon, label, students;
+      if (Array.isArray(rule)) {
+        // Old format: ['Student1', 'Student2']
+        icon = '❌';
+        label = 'Never';
+        students = rule.join(' & ');
+      } else {
+        // New format: { type: 'never'/'always', students: [...] }
+        icon = rule.type === 'never' ? '❌' : '✅';
+        label = rule.type === 'never' ? 'Never' : 'Always';
+        students = rule.students.join(', ');
+      }
+
+      div.innerHTML = `
+        <div class="flex items-center gap-xs">
+          <span style="font-size: 1.1em;">${icon}</span>
+          <span class="font-semibold text-xs">${label}:</span>
+          <span class="text-sm">${students}</span>
+        </div>
+      `;
 
       div.addEventListener('click', () => {
         div.classList.toggle('bg-lavender');
@@ -708,16 +791,24 @@ class TeacherApp {
     const list = Storage.getList(this.currentListId);
     if (!list) return;
 
-    // Remove pairs by index (in reverse to maintain indices)
+    // Initialise pairingRules if using old format
+    if (!list.pairingRules && list.incompatiblePairs) {
+      list.pairingRules = list.incompatiblePairs.map(pair => ({
+        type: 'never',
+        students: pair
+      }));
+    }
+
+    // Remove rules by index (in reverse to maintain indices)
     this.selectedRulesForRemoval.sort((a, b) => b - a).forEach(index => {
-      list.incompatiblePairs.splice(index, 1);
+      list.pairingRules.splice(index, 1);
     });
 
-    Storage.updateList(this.currentListId, { incompatiblePairs: list.incompatiblePairs });
+    Storage.updateList(this.currentListId, { pairingRules: list.pairingRules });
 
     Utils.showToast(`Removed ${this.selectedRulesForRemoval.length} rule(s)`, 'success');
     this.selectedRulesForRemoval = [];
-    this.loadIncompatiblePairs(list.incompatiblePairs);
+    this.loadIncompatiblePairs(list.pairingRules);
   }
 
   // Export/Import Methods

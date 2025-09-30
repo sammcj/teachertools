@@ -70,26 +70,36 @@ The main tool that allows teachers to create and manage student groups for class
 - Merges any remaining single-person groups into smallest existing groups
 - Validates against blacklist after each generation attempt
 
-#### 4. Grouping Rules (Incompatible Pairs)
+#### 4. Grouping Rules (Pairing Rules)
 
-- Define students who cannot be grouped together
-- Multi-student incompatible groupings (creates all pairwise combinations)
+- Define bidirectional pairing rules:
+  - **Never together** (❌): Students who cannot be grouped together
+  - **Always together** (✅): Students who must be in the same group
+- Multi-student rule support (2+ students per rule)
+- For "never" rules: Creates pairwise combinations (e.g., 3 students = 3 pairs)
+- For "always" rules: Stores all students as single rule group
 - Visual tags showing selected students for grouping rule
+- Rule type indicators (❌/✅) in rule list display
 - Remove individual students from pending rule
-- Remove existing incompatible pairs via selection
+- Remove existing rules via selection
 - Collapsible panel to save screen space
 - Rules validated during group generation
+- Backwards compatible with old "incompatible pairs" format
 
 #### 5. Group Naming System
 
 - Toggle between emoji animal names and numbered groups (e.g., "Group 1")
 - Setting stored per class list
-- 16 predefined animal options:
+- 30 predefined animal options (supports classes with up to 30 groups):
   - 🦘 Kangaroos, 🐨 Koalas, 🐬 Dolphins, 🦒 Giraffes
   - 🐼 Pandas, 🐰 Rabbits, 🐶 Puppies, 🐱 Cats
   - 🦁 Lions, 🐻 Bears, 🐘 Elephants, 🦉 Owls
   - 🦅 Eagles, 🐢 Turtles, 🐯 Tigers, 🦊 Foxes
-- Cycles through animals if more groups than available emojis
+  - 🐺 Wolves, 🦇 Bats, 🦋 Butterflies, 🐝 Bees
+  - 🦎 Lizards, 🐍 Snakes, 🦆 Ducks, 🦢 Swans
+  - 🐧 Penguins, 🦩 Flamingos, 🦚 Peacocks, 🦜 Parrots
+  - 🐳 Whales, 🦈 Sharks
+- Cycles through animals if more than 30 groups needed
 
 #### 6. Data Persistence & Portability
 
@@ -107,16 +117,27 @@ The main tool that allows teachers to create and manage student groups for class
     "list_[timestamp]": {
       "name": "Class Name",
       "students": ["Student 1", "Student 2"],
-      "blacklist": [["Student 1", "Student 2"]],
+      "pairingRules": [
+        {
+          "type": "never",
+          "students": ["Student 1", "Student 2"]
+        },
+        {
+          "type": "always",
+          "students": ["Student 3", "Student 4", "Student 5"]
+        }
+      ],
       "groupSize": 3,
-      "currentGroups": [["Group 1 members"], ["Group 2 members"]],
+      "groups": [["Group 1 members"], ["Group 2 members"]],
       "useEmojiNames": true
     }
   },
-  "currentList": "list_[timestamp]",
-  "version": "1.0.0"
+  "currentListId": "list_[timestamp]",
+  "version": "2.0.0"
 }
 ```
+
+**Note:** Old format with `incompatiblePairs: [["Student 1", "Student 2"]]` is automatically converted to new `pairingRules` format on load.
 
 #### 7. Teacher View Interface
 
