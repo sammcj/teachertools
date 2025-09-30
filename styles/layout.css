@@ -158,6 +158,26 @@ h1, h2, h3, h4, h5, h6 {
   min-width: 0;
 }
 
+/* App container with sidebar */
+.app-container {
+  display: flex;
+  gap: var(--space-lg);
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  padding: var(--space-lg);
+  flex: 1;
+}
+
+.app-sidebar {
+  flex: 0 0 280px;
+  min-width: 280px;
+}
+
+.sidebar-inner {
+  position: sticky;
+  top: var(--space-lg);
+}
+
 @media (max-width: 1023px) {
   .sidebar-layout {
     flex-direction: column;
@@ -165,5 +185,18 @@ h1, h2, h3, h4, h5, h6 {
 
   .sidebar {
     flex: 1;
+  }
+
+  .app-container {
+    flex-direction: column;
+  }
+
+  .app-sidebar {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .sidebar-inner {
+    position: static;
   }
 }
