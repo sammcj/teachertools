@@ -1,303 +1,294 @@
 /**
- * storage.js - Handles LocalStorage operations for GroupThing
- * Manages saving and loading class lists, blacklists, and group configurations
- * Includes functionality for exporting and importing settings
+ * Storage Manager
+ * Handles LocalStorage operations for Emma's Teacher Tools
  */
 
-const StorageManager = {
-    // Storage key for all GroupThing data
-    STORAGE_KEY: 'groupThing_data',
+const Storage = {
+  STORAGE_KEY: 'emmaTeacherTools_v2',
+  VERSION: '2.0.0',
 
-    // Default data structure
-    defaultData: {
-        lists: {},
-        currentList: null,
-        version: "1.0.0"
-    },
+  /**
+   * Get default data structure
+   */
+  getDefaultData() {
+    return {
+      lists: {},
+      currentListId: null,
+      version: this.VERSION
+    };
+  },
 
-    /**
-     * Initialise storage with default data if not exists
-     */
-    init() {
-        if (!localStorage.getItem(this.STORAGE_KEY)) {
-            this.saveData(this.defaultData);
-        }
-    },
-
-    /**
-     * Get all data from storage
-     * @returns {Object} The stored data
-     */
-    getData() {
-        try {
-            const data = JSON.parse(localStorage.getItem(this.STORAGE_KEY));
-            return data || this.defaultData;
-        } catch (error) {
-            console.error('Error retrieving data from storage:', error);
-            return this.defaultData;
-        }
-    },
-
-    /**
-     * Save data to storage
-     * @param {Object} data - The data to save
-     */
-    saveData(data) {
-        try {
-            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
-        } catch (error) {
-            console.error('Error saving data to storage:', error);
-        }
-    },
-
-    /**
-     * Get all class lists
-     * @returns {Object} All class lists
-     */
-    getLists() {
-        return this.getData().lists;
-    },
-
-    /**
-     * Set all class lists
-     * @param {Object} lists - The lists object to save
-     */
-    setLists(lists) {
-        const data = this.getData();
-        data.lists = lists;
-        this.saveData(data);
-    },
-
-    /**
-     * Get a specific class list by ID
-     * @param {string} listId - The ID of the list to get
-     * @returns {Object|null} The class list or null if not found
-     */
-    getList(listId) {
-        const lists = this.getLists();
-        return lists[listId] || null;
-    },
-
-    /**
-     * Save a class list
-     * @param {string} listId - The ID of the list
-     * @param {Object} listData - The list data to save
-     */
-    saveList(listId, listData) {
-        const data = this.getData();
-        data.lists[listId] = listData;
-        this.saveData(data);
-    },
-
-    /**
-     * Delete a class list
-     * @param {string} listId - The ID of the list to delete
-     */
-    deleteList(listId) {
-        const data = this.getData();
-        if (data.lists[listId]) {
-            delete data.lists[listId];
-
-            // If the deleted list was the current list, set currentList to null
-            if (data.currentList === listId) {
-                data.currentList = null;
-            }
-
-            this.saveData(data);
-        }
-    },
-
-    /**
-     * Set the current active list
-     * @param {string} listId - The ID of the list to set as current
-     */
-    setCurrentList(listId) {
-        const data = this.getData();
-        data.currentList = listId;
-        this.saveData(data);
-    },
-
-    /**
-     * Get the current active list ID
-     * @returns {string|null} The current list ID or null if none
-     */
-    getCurrentListId() {
-        return this.getData().currentList;
-    },
-
-    /**
-     * Get the current active list data
-     * @returns {Object|null} The current list data or null if none
-     */
-    getCurrentList() {
-        const currentId = this.getCurrentListId();
-        return currentId ? this.getList(currentId) : null;
-    },
-
-    /**
-     * Create a new empty class list
-     * @param {string} name - The name of the new list
-     * @returns {string} The ID of the new list
-     */
-    createList(name) {
-        const listId = 'list_' + Date.now();
-        const newList = {
-            name: name,
-            students: [],
-            blacklist: [],
-            groupSize: 3,
-            currentGroups: null,
-            useEmojiNames: true // Default to using emoji names
-        };
-
-        this.saveList(listId, newList);
-        return listId;
-    },
-
-    /**
-     * Update the students in a list
-     * @param {string} listId - The ID of the list
-     * @param {Array} students - Array of student names
-     */
-    updateStudents(listId, students) {
-        const list = this.getList(listId);
-        if (list) {
-            list.students = students;
-            this.saveList(listId, list);
-        }
-    },
-
-    /**
-     * Update the blacklist in a list
-     * @param {string} listId - The ID of the list
-     * @param {Array} blacklist - Array of blacklisted pairs
-     */
-    updateBlacklist(listId, blacklist) {
-        const list = this.getList(listId);
-        if (list) {
-            list.blacklist = blacklist;
-            this.saveList(listId, list);
-        }
-    },
-
-    /**
-     * Update the group size for a list
-     * @param {string} listId - The ID of the list
-     * @param {number} size - The new group size
-     */
-    updateGroupSize(listId, size) {
-        const list = this.getList(listId);
-        if (list) {
-            list.groupSize = size;
-            this.saveList(listId, list);
-        }
-    },
-
-    /**
-     * Save generated groups for a list
-     * @param {string} listId - The ID of the list
-     * @param {Array} groups - The generated groups
-     */
-    saveGroups(listId, groups) {
-        const list = this.getList(listId);
-        if (list) {
-            list.currentGroups = groups;
-            this.saveList(listId, list);
-        }
-    },
-
-    /**
-     * Get the current groups for a list
-     * @param {string} listId - The ID of the list
-     * @returns {Array|null} The current groups or null if none
-     */
-    getGroups(listId) {
-        const list = this.getList(listId);
-        return list ? list.currentGroups : null;
-    },
-
-    /**
-     * Clear all data from storage (for testing or reset)
-     */
-    clearAll() {
-        localStorage.removeItem(this.STORAGE_KEY);
-        this.init();
-    },
-
-    /**
-     * Export all settings to a JSON file
-     * @returns {Object} The data to be exported
-     */
-    exportSettings() {
-        const data = this.getData();
-
-        // Ensure version is included in the exported data
-        if (!data.version) {
-            data.version = "1.0.0";
-        }
-
-        // Create a Blob with the JSON data
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-
-        // Create a download link and trigger the download
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'groupthing_settings.json';
-        document.body.appendChild(a);
-        a.click();
-
-        // Clean up
-        setTimeout(() => {
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }, 0);
-
-        return data;
-    },
-
-    /**
-     * Import settings from a JSON file
-     * @param {File} file - The JSON file to import
-     * @returns {Promise} A promise that resolves when the import is complete
-     */
-    importSettings(file) {
-        return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-
-            reader.onload = (event) => {
-                try {
-                    const importedData = JSON.parse(event.target.result);
-
-                    // Validate the imported data
-                    if (!importedData.lists) {
-                        throw new Error('Invalid settings file: missing lists property');
-                    }
-
-                    // Merge with default data structure to ensure all required properties exist
-                    const mergedData = {
-                        ...this.defaultData,
-                        ...importedData,
-                        // Keep the version from imported data or use default
-                        version: importedData.version || this.defaultData.version
-                    };
-
-                    // Save the imported data
-                    this.saveData(mergedData);
-                    resolve(mergedData);
-                } catch (error) {
-                    reject(error);
-                }
-            };
-
-            reader.onerror = () => {
-                reject(new Error('Error reading the file'));
-            };
-
-            reader.readAsText(file);
-        });
+  /**
+   * Initialise storage with default data if needed
+   */
+  init() {
+    const data = this.getData();
+    console.log('Storage.init() - Current data:', data);
+    console.log('Storage.init() - Has version?', !!data?.version);
+    if (!data || !data.version) {
+      console.log('Storage.init() - Initialising with default data (THIS WILL ERASE EXISTING DATA!)');
+      this.saveData(this.getDefaultData());
+    } else {
+      console.log('Storage.init() - Using existing data');
     }
+  },
+
+  /**
+   * Get all data from storage
+   */
+  getData() {
+    try {
+      console.log('Storage.getData() - Using key:', this.STORAGE_KEY);
+      const raw = localStorage.getItem(this.STORAGE_KEY);
+      console.log('Storage.getData() - Raw from localStorage:', raw ? raw.substring(0, 100) + '...' : 'NULL');
+      console.log('Storage.getData() - Raw length:', raw ? raw.length : 0);
+
+      if (!raw) {
+        console.log('Storage.getData() - No data found, checking all localStorage keys:');
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          console.log(`  - ${key}: ${localStorage.getItem(key)?.substring(0, 50)}...`);
+        }
+      }
+
+      const data = raw ? JSON.parse(raw) : this.getDefaultData();
+      console.log('Storage.getData() - Parsed data has', Object.keys(data.lists || {}).length, 'lists');
+      return data;
+    } catch (error) {
+      console.error('Error reading from storage:', error);
+      return this.getDefaultData();
+    }
+  },
+
+  /**
+   * Save all data to storage
+   */
+  saveData(data) {
+    try {
+      console.log('Storage.saveData() - Saving data with', Object.keys(data.lists || {}).length, 'lists, currentListId:', data.currentListId);
+      localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+      console.log('Storage.saveData() - Save complete');
+      return true;
+    } catch (error) {
+      console.error('Error saving to storage:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Get all class lists
+   */
+  getLists() {
+    return this.getData().lists;
+  },
+
+  /**
+   * Get a specific class list by ID
+   */
+  getList(listId) {
+    const lists = this.getLists();
+    return lists[listId] || null;
+  },
+
+  /**
+   * Create a new class list
+   */
+  createList(name) {
+    const data = this.getData();
+    const listId = `list_${Date.now()}`;
+
+    data.lists[listId] = {
+      name,
+      students: [],
+      incompatiblePairs: [],
+      groupSize: 3,
+      groups: null,
+      useEmojiNames: true
+    };
+
+    this.saveData(data);
+    return listId;
+  },
+
+  /**
+   * Update a class list
+   */
+  updateList(listId, updates) {
+    const data = this.getData();
+    if (data.lists[listId]) {
+      data.lists[listId] = { ...data.lists[listId], ...updates };
+      return this.saveData(data);
+    }
+    return false;
+  },
+
+  /**
+   * Delete a class list
+   */
+  deleteList(listId) {
+    const data = this.getData();
+    if (data.lists[listId]) {
+      delete data.lists[listId];
+      if (data.currentListId === listId) {
+        data.currentListId = null;
+      }
+      return this.saveData(data);
+    }
+    return false;
+  },
+
+  /**
+   * Reorder class lists
+   */
+  reorderLists(orderedIds) {
+    const data = this.getData();
+    const newLists = {};
+
+    orderedIds.forEach(id => {
+      if (data.lists[id]) {
+        newLists[id] = data.lists[id];
+      }
+    });
+
+    data.lists = newLists;
+    return this.saveData(data);
+  },
+
+  /**
+   * Get current list ID
+   */
+  getCurrentListId() {
+    const data = this.getData();
+    console.log('Storage - getCurrentListId called, full data:', data);
+    return data.currentListId;
+  },
+
+  /**
+   * Set current list ID
+   */
+  setCurrentListId(listId) {
+    const data = this.getData();
+    data.currentListId = listId;
+    console.log('Storage - Setting current list ID to:', listId);
+    const success = this.saveData(data);
+    console.log('Storage - Save successful:', success, 'Verify:', this.getCurrentListId());
+    return success;
+  },
+
+  /**
+   * Export all data to JSON file
+   */
+  exportData() {
+    const data = this.getData();
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `teacher-tools-backup-${Date.now()}.json`;
+    document.body.appendChild(a);
+    a.click();
+
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 0);
+
+    return true;
+  },
+
+  /**
+   * Import data from JSON file
+   */
+  async importData(file) {
+    return new Promise((resolve, reject) => {
+      if (!file || file.type !== 'application/json') {
+        reject(new Error('Please select a valid JSON file'));
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+
+          if (!data.lists || typeof data.lists !== 'object') {
+            reject(new Error('Invalid backup file format'));
+            return;
+          }
+
+          // Merge with default structure
+          const importedData = {
+            ...this.getDefaultData(),
+            ...data
+          };
+
+          this.saveData(importedData);
+          resolve(importedData);
+        } catch (error) {
+          reject(new Error('Failed to parse JSON file'));
+        }
+      };
+
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsText(file);
+    });
+  },
+
+  /**
+   * Clear all data
+   */
+  clearAll() {
+    localStorage.removeItem(this.STORAGE_KEY);
+    this.init();
+    return true;
+  },
+
+  /**
+   * Load sample data for demo
+   */
+  loadSampleData() {
+    const data = this.getDefaultData();
+
+    // Class 1A
+    const class1Id = `list_${Date.now()}`;
+    data.lists[class1Id] = {
+      name: 'Class 1A',
+      students: [
+        'Alice Smith', 'Bob Johnson', 'Charlie Brown',
+        'Diana Prince', 'Emma Watson', 'Frank Miller',
+        'Grace Hopper', 'Henry Ford', 'Iris West'
+      ],
+      incompatiblePairs: [
+        ['Alice Smith', 'Charlie Brown'],
+        ['Bob Johnson', 'Frank Miller']
+      ],
+      groupSize: 3,
+      groups: null,
+      useEmojiNames: true
+    };
+
+    // Science Group
+    const class2Id = `list_${Date.now() + 1}`;
+    data.lists[class2Id] = {
+      name: 'Science Group',
+      students: [
+        'Jane Foster', 'Bruce Banner', 'Peter Parker',
+        'Tony Stark', 'Natasha Romanoff', 'Steve Rogers'
+      ],
+      incompatiblePairs: [],
+      groupSize: 3,
+      groups: null,
+      useEmojiNames: true
+    };
+
+    data.currentListId = class1Id;
+    this.saveData(data);
+    return class1Id;
+  }
 };
 
-// Initialise storage when the script loads
-StorageManager.init();
+// Initialise on load
+Storage.init();

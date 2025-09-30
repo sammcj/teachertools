@@ -1,5 +1,19 @@
 # Emma's Teacher Tools - Rewrite Specification
 
+## Implementation Status
+
+✅ **COMPLETED** - Full rewrite finished on 30 September 2025
+
+**Key Changes from Original:**
+- Unified single-page application (resolves localStorage scope issues with `file://` protocol)
+- Modern CSS architecture with design tokens
+- Improved visual feedback for student selection
+- Drag-and-drop class list reordering
+- Constraint satisfaction warnings
+- Student view with confetti animation
+- Responsive mobile-first design
+- All files consolidated into `index.html` for simplicity
+
 ## Project Overview
 
 A web-based classroom management application built for Emma, a primary school teacher. The application provides tools to help manage classroom activities, with the primary feature being "GroupThing" - a student group generator.
@@ -10,6 +24,8 @@ A web-based classroom management application built for Emma, a primary school te
 - Offline-capable after initial load
 - Simple, intuitive interface suitable for classroom use
 - Visual appeal for young students
+
+**Extensibility:** Designed to support multiple teaching tools beyond GroupThing
 
 ## Current Features
 
@@ -291,6 +307,806 @@ Tab-based architecture supports additional tools:
 - Iframe approach allows tool isolation in multi-tool interface
 - CSS variables enable consistent theming
 - Sample data provides immediate usability for new users
+
+## Recommended Libraries & Modern CSS Patterns for Rewrite
+
+### Animation Libraries (Lightweight Options)
+
+#### 1. Animate.css (Recommended - Simplest)
+**Size:** ~80KB unminified, ~10KB minified
+**CDN:** Available
+**Best for:** Quick, ready-made animations without JavaScript
+
+**Pros:**
+- Pure CSS, no JavaScript required
+- 80+ pre-built animations (entrances, exits, attention seekers)
+- CSS custom properties for easy customisation
+- Just add class names: `animate__animated animate__bounce`
+- Can use only specific animations (tree-shakeable via npm)
+
+**Cons:**
+- Larger file size if using all animations
+- Less control than custom animations
+
+**Use cases for Teacher Tools:**
+- Card entrance animations (bounceIn, fadeIn)
+- Button feedback (pulse, heartBeat)
+- Error messages (shake, wobble)
+- Modal appearances (zoomIn, slideInDown)
+- Group bubble entrances (backInUp, rollIn)
+
+**Implementation:**
+```html
+<!-- CDN -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+
+<!-- Usage -->
+<div class="group-bubble animate__animated animate__bounceIn">...</div>
+```
+
+#### 2. Animista (Recommended - Most Flexible)
+**Size:** 0KB (on-demand, copy what you need)
+**CDN:** Not applicable (playground-based)
+**Best for:** Custom selection without package overhead
+
+**Pros:**
+- Zero installation - visit playground, copy CSS
+- Extensive customisation options in browser
+- Only include animations you actually use
+- Native CSS keyframes
+- Perfect for keeping bundle size minimal
+
+**Cons:**
+- Manual process (visit site, copy code)
+- No package updates
+
+**Use cases for Teacher Tools:**
+- Customised confetti fall animation
+- Specific card hover effects
+- Tailored entrance/exit transitions
+- Unique text animations for group names
+
+**Implementation:**
+Visit [animista.net](https://animista.net/), configure animation, copy CSS:
+```css
+.rotate-in-center {
+  animation: rotate-in-center 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+@keyframes rotate-in-center {
+  0% { transform: rotate(-360deg); opacity: 0; }
+  100% { transform: rotate(0); opacity: 1; }
+}
+```
+
+#### 3. Motion One (Optional - Advanced)
+**Size:** ~5KB minified
+**Best for:** Complex JavaScript-driven animations
+
+**Pros:**
+- Tiny footprint (smaller than GSAP, Framer Motion)
+- Modern Web Animations API
+- Spring animations, timeline orchestration
+- Excellent performance
+
+**Cons:**
+- Requires JavaScript knowledge
+- May be overkill for simple animations
+
+**Use cases for Teacher Tools:**
+- Coordinated multi-element animations
+- Physics-based drag interactions
+- Complex state transitions
+
+**Not recommended unless:** You need complex orchestrated animations that pure CSS can't handle.
+
+### Modern CSS Patterns (No Libraries Required)
+
+#### 1. View Transitions API
+**Browser Support:** Chrome, Edge, Opera (Safari/Firefox in progress)
+**Best for:** Smooth state transitions without JavaScript overhead
+
+**Use cases:**
+- Switching between teacher and student views
+- Expanding group cards
+- List reordering feedback
+- Modal open/close transitions
+
+**Implementation:**
+```javascript
+document.startViewTransition(() => {
+  // Update DOM state
+  container.innerHTML = newContent;
+});
+```
+
+```css
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.5s;
+}
+```
+
+**Benefits for Teacher Tools:**
+- Crossfade between views
+- Element position transitions (list reordering)
+- No extra dependencies
+- Smooth page transitions
+
+#### 2. CSS Container Queries
+**Browser Support:** All modern browsers (2023+)
+**Best for:** Responsive components regardless of viewport
+
+**Use cases:**
+- Group cards that adapt to available space
+- Student list that changes layout based on panel width
+- Responsive typography in constrained spaces
+
+**Implementation:**
+```css
+.group-container {
+  container-type: inline-size;
+}
+
+@container (min-width: 400px) {
+  .group-bubble {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+```
+
+#### 3. Scroll-Snap
+**Browser Support:** All modern browsers
+**Best for:** Smooth scrolling between sections
+
+**Use cases:**
+- Mobile student view (snap between groups)
+- Horizontal class list scrolling
+- Smooth panel transitions
+
+**Implementation:**
+```css
+.groups-container {
+  scroll-snap-type: y mandatory;
+  overflow-y: scroll;
+}
+
+.group-bubble {
+  scroll-snap-align: start;
+}
+```
+
+#### 4. Glassmorphism Effects
+**Browser Support:** Modern browsers with backdrop-filter
+**Best for:** Modern, playful UI aesthetic
+
+**Use cases:**
+- Modal overlays
+- Floating action buttons
+- Teacher control panels
+- Card hover states
+
+**Implementation:**
+```css
+.glass-card {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+```
+
+#### 5. CSS Custom Properties (Variables) for Theming
+**Browser Support:** All modern browsers
+**Best for:** Consistent, maintainable colour schemes
+
+**Implementation:**
+```css
+:root {
+  --color-primary: #ffafcc;
+  --color-mint: #a0e7e5;
+  --color-lavender: #b8c0ff;
+  --color-yellow: #ffd166;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --radius: 8px;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --transition-speed: 0.3s;
+}
+
+.group-bubble {
+  background: var(--color-primary);
+  padding: var(--spacing-md);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform var(--transition-speed);
+}
+```
+
+#### 6. Modern Layout: CSS Grid + Flexbox
+**Browser Support:** All modern browsers
+**Best for:** Responsive, maintainable layouts
+
+**Implementation:**
+```css
+/* Auto-fit cards with minimum width */
+.groups-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Flexbox for header controls */
+.header-actions {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: space-between;
+}
+```
+
+#### 7. CSS Animation Performance Patterns
+**Best Practices:**
+- Use `transform` and `opacity` for animations (GPU accelerated)
+- Avoid animating `width`, `height`, `top`, `left`
+- Use `will-change` sparingly for complex animations
+- Prefer CSS transitions over JavaScript animation for simple effects
+
+**Implementation:**
+```css
+/* Good: GPU accelerated */
+.card {
+  transition: transform 0.3s, opacity 0.3s;
+}
+.card:hover {
+  transform: translateY(-5px) scale(1.02);
+}
+
+/* Avoid: Forces layout recalculation */
+.card:hover {
+  width: 310px; /* Don't do this */
+  top: -5px;    /* Don't do this */
+}
+```
+
+### Recommended Approach for Rewrite
+
+**Core Strategy: Minimal dependencies, maximum native CSS**
+
+1. **Use Animate.css** for quick, pre-built animations (~10KB minified)
+   - Include only needed animations if using npm build
+   - Or use Animista for completely zero-bundle approach
+
+2. **Modern CSS features** for everything else:
+   - View Transitions API for state changes
+   - Container Queries for responsive components
+   - CSS Grid + Flexbox for layout
+   - Custom Properties for theming
+   - Glassmorphism for modern aesthetic
+
+3. **No JavaScript animation libraries needed** unless:
+   - You need complex orchestrated animations
+   - You want physics-based interactions
+   - (Then consider Motion One at 5KB)
+
+4. **Design inspiration:**
+   - Duolingo-style bouncy interactions
+   - Notion-style clean organisation
+   - Linear-style subtle micro-animations
+   - Maintain playful but professional aesthetic
+
+### Visual Design Enhancements
+
+**Colour System:**
+```css
+:root {
+  /* Pastel primaries */
+  --pink: #ffafcc;
+  --mint: #a0e7e5;
+  --lavender: #b8c0ff;
+  --yellow: #ffd166;
+  --magenta: #ff9cee;
+  --peach: #ffc8a2;
+  --light-green: #c1fba4;
+  --light-blue: #9bf6ff;
+
+  /* Semantic colours */
+  --bg-primary: #fafafa;
+  --text-primary: #2c3e50;
+  --text-secondary: #6c757d;
+  --success: #27AE60;
+  --error: #E74C3C;
+  --warning: #F39C12;
+}
+```
+
+**Typography:**
+```css
+:root {
+  --font-heading: 'Poppins', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+```
+
+**Spacing Scale:**
+```css
+:root {
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+}
+```
+
+## Development Checklist
+
+### Phase 1: Project Setup & Foundation
+- [ ] Create new project structure with clean directory organisation
+- [ ] Set up CSS architecture with modern patterns
+  - [ ] Create `styles/variables.css` with design tokens (colours, spacing, typography)
+  - [ ] Create `styles/reset.css` with modern CSS reset
+  - [ ] Create `styles/utilities.css` with common utility classes
+  - [ ] Create `styles/layout.css` with grid/flexbox layouts
+  - [ ] Create `styles/components.css` for reusable components
+- [ ] Integrate Animate.css or set up Animista animations
+- [ ] Set up modern font stack (Poppins, Inter, system fonts)
+- [ ] Create colour system with CSS custom properties
+- [ ] Implement spacing scale and sizing system
+
+### Phase 2: Core Data Layer
+- [ ] Rewrite `storage.js` module (keep it simple, it already works well)
+  - [ ] LocalStorage get/set operations
+  - [ ] Export to JSON functionality
+  - [ ] Import from JSON with validation
+  - [ ] Basic error handling
+- [ ] Port the group generation algorithm from `common.js` (it's already simple and works!)
+  - [ ] Shuffle students randomly (Fisher-Yates is just fancy way to say "shuffle properly")
+  - [ ] Distribute into groups evenly (round-robin)
+  - [ ] If someone would be alone, add them to smallest group
+  - [ ] If there are "don't pair" rules, shuffle and retry up to 50 times
+  - [ ] That's it! Don't overcomplicate this.
+- [ ] Test with existing `test-groups.html` to verify it still works
+
+### Phase 3: Teacher View - Layout & Structure
+- [ ] Build teacher view HTML structure
+  - [ ] Header with export/import/switch view controls
+  - [ ] Class Lists panel (left sidebar)
+  - [ ] Current List panel (main area)
+  - [ ] Grouping Rules panel (collapsible)
+  - [ ] Generated Groups preview panel
+- [ ] Implement responsive layout
+  - [ ] Mobile-first approach
+  - [ ] Tablet breakpoints
+  - [ ] Desktop optimisation
+  - [ ] Container queries for adaptive components
+- [ ] Add glassmorphism effects to modals and panels
+- [ ] Implement smooth transitions between panels
+
+### Phase 4: Teacher View - Class List Management
+- [ ] Create class list UI components
+  - [ ] List item card with drag handles
+  - [ ] Edit/delete action buttons
+  - [ ] Active state indicator
+  - [ ] Empty state message
+- [ ] Implement drag-and-drop reordering
+  - [ ] Visual feedback during drag
+  - [ ] Save order to storage
+  - [ ] Smooth animations with View Transitions API
+- [ ] Build modal dialogue for create/edit
+  - [ ] Form validation
+  - [ ] Enter key submission
+  - [ ] Escape key cancellation
+  - [ ] Backdrop click to close
+- [ ] Add list selector dropdown
+  - [ ] Sync with active list
+  - [ ] Keyboard navigation support
+
+### Phase 5: Teacher View - Student Management
+- [ ] Build student list UI
+  - [ ] Multi-select functionality
+  - [ ] Visual selection states
+  - [ ] Empty state handling
+- [ ] Implement add student(s) functionality
+  - [ ] Single student input
+  - [ ] Bulk add (one per line)
+  - [ ] Duplicate detection with warning
+  - [ ] Enter to submit, Shift+Enter for new line
+  - [ ] Success/error feedback messages
+- [ ] Implement remove students functionality
+  - [ ] Multi-select removal
+  - [ ] Confirmation dialogue
+  - [ ] Auto-remove from incompatible pairs
+- [ ] Update incompatible pairs dropdown when students change
+
+### Phase 6: Teacher View - Group Generation
+- [ ] Build group size slider
+  - [ ] Range input (1-15)
+  - [ ] Visual numeric display
+  - [ ] Smooth value updates
+  - [ ] Save to storage on change
+- [ ] Implement emoji names toggle
+  - [ ] Checkbox UI
+  - [ ] Sync with storage
+  - [ ] Update preview on toggle
+- [ ] Build generate groups button
+  - [ ] Loading state during generation
+  - [ ] Success animation
+  - [ ] Error handling with messages
+- [ ] Create groups preview UI
+  - [ ] Card/bubble layout
+  - [ ] Group titles (emoji animals or numbers)
+  - [ ] Member lists
+  - [ ] Empty state message
+  - [ ] Staggered entrance animations (Animate.css or Animista)
+
+### Phase 7: Teacher View - Grouping Rules
+- [ ] Build collapsible panel
+  - [ ] Smooth expand/collapse animation
+  - [ ] Collapsed by default
+  - [ ] Visual indicator (arrow icon)
+- [ ] Create incompatible students selector
+  - [ ] Dropdown for student selection
+  - [ ] Visual tags for selected students
+  - [ ] Remove tag functionality
+  - [ ] Add multiple students to group
+- [ ] Build incompatible pairs list
+  - [ ] Display all pairs
+  - [ ] Multi-select for removal
+  - [ ] Empty state message
+- [ ] Implement add/remove functionality
+  - [ ] Create all pairwise combinations
+  - [ ] Duplicate pair detection
+  - [ ] Success/error feedback
+
+### Phase 8: Teacher View - Export/Import
+- [ ] Implement export functionality
+  - [ ] Generate JSON from storage
+  - [ ] Download with timestamp in filename
+  - [ ] Success message with feedback
+- [ ] Build import modal
+  - [ ] File input (JSON only)
+  - [ ] Validation and error messages
+  - [ ] Confirmation before overwrite
+  - [ ] Progress indicator
+- [ ] Add sample data loader
+  - [ ] Pre-populated class lists
+  - [ ] Confirmation before overwrite
+  - [ ] Auto-select first class after load
+
+### Phase 9: Student View - UI & Display
+- [ ] Build student view structure
+  - [ ] Clean, minimal header with class name
+  - [ ] Groups container
+  - [ ] Switch to teacher view link
+- [ ] Create group bubble/card components
+  - [ ] Large, visually appealing design
+  - [ ] Group title with emoji/number
+  - [ ] Member names list
+  - [ ] Responsive layout (rectangular for >6 students)
+- [ ] Implement confetti animation
+  - [ ] 100 pieces
+  - [ ] Random colours from pastel palette
+  - [ ] 5-second duration
+  - [ ] Auto-cleanup after animation
+- [ ] Add staggered entrance animations
+  - [ ] 0.1s delay per group
+  - [ ] Bounce or fade-in effect
+- [ ] Handle empty states
+  - [ ] No groups message
+  - [ ] Link back to teacher view
+
+### Phase 10: Student View - Data Loading
+- [ ] Implement URL parameter handling
+  - [ ] Parse list ID from URL
+  - [ ] Parse base64-encoded group data
+  - [ ] Dual-method fallback for compatibility
+  - [ ] Error handling for malformed data
+- [ ] Implement LocalStorage fallback
+  - [ ] Read current list from storage
+  - [ ] Display groups from storage
+  - [ ] Handle missing data gracefully
+- [ ] Create student view link generator (teacher side)
+  - [ ] Encode current groups in URL
+  - [ ] Update link when groups regenerate
+  - [ ] Copy-to-clipboard functionality (optional enhancement)
+
+### Phase 11: Responsive Design & Mobile
+- [ ] Test all breakpoints
+  - [ ] Mobile (320px - 767px)
+  - [ ] Tablet (768px - 1023px)
+  - [ ] Desktop (1024px+)
+  - [ ] Desktop (WQHD/4k)
+- [ ] Implement mobile-specific enhancements
+  - [ ] Touch-friendly hit targets (min 44x44px)
+  - [ ] Scroll-snap for student view groups
+  - [ ] Hamburger menu if needed for header actions
+  - [ ] Optimise drag-and-drop for touch
+- [ ] Test on actual devices
+  - [ ] iOS Safari
+  - [ ] Android Chrome
+  - [ ] Tablet landscape/portrait
+
+### Phase 12: Accessibility
+- [ ] Keyboard navigation
+  - [ ] Tab order logical and complete
+  - [ ] Focus indicators visible
+  - [ ] Escape to close modals
+  - [ ] Enter to submit forms
+- [ ] Screen reader support
+  - [ ] Semantic HTML elements
+  - [ ] ARIA labels where needed
+  - [ ] Alt text for visual elements
+  - [ ] Announce dynamic content changes
+- [ ] Colour contrast
+  - [ ] All text meets WCAG AA standards (4.5:1)
+  - [ ] Interactive elements clearly distinguishable
+  - [ ] Error states clearly visible
+- [ ] Reduced motion support
+  - [ ] Respect `prefers-reduced-motion`
+  - [ ] Disable animations for users who prefer reduced motion
+
+### Phase 13: Performance Optimisation
+- [ ] Minimise bundle size
+  - [ ] Tree-shake unused Animate.css animations
+  - [ ] Remove unused CSS
+  - [ ] Optimise font loading (font-display: swap)
+- [ ] Optimise animations
+  - [ ] Use transform and opacity only
+  - [ ] Avoid layout thrashing
+  - [ ] Test 60fps on low-end devices
+- [ ] Lazy load non-critical resources
+  - [ ] Defer non-essential JavaScript
+  - [ ] Load fonts asynchronously
+- [ ] Test performance
+  - [ ] Lighthouse audit (aim for 90+ performance)
+  - [ ] Test on slow 3G connection
+  - [ ] Measure group generation speed (<500ms)
+
+### Phase 14: Browser Testing & Compatibility
+- [ ] Ensure it will work in Firefox, Chrome and Safari
+  - [ ] Chrome
+  - [ ] Firefox
+  - [ ] Safari
+- [ ] Graceful degradation for unsupported features
+  - [ ] View Transitions API fallback (instant switch)
+  - [ ] Glassmorphism fallback (solid backgrounds)
+  - [ ] Container queries fallback (media queries)
+- [ ] Test offline functionality
+  - [ ] Works after initial load without internet
+  - [ ] Service worker (optional enhancement)
+
+### Phase 15: Polish & User Experience
+- [ ] Add loading states for all async operations
+- [ ] Implement success/error toast messages
+  - [ ] Auto-dismiss after 3 seconds
+  - [ ] Smooth entrance/exit animations
+  - [ ] Colour-coded by type (success/error/info)
+- [ ] Add empty states with helpful guidance
+  - [ ] New user onboarding hints
+  - [ ] Clear next action suggestions
+- [ ] Add confirmation dialogues for destructive actions
+  - [ ] Delete class list
+  - [ ] Clear all data
+  - [ ] Import (overwrite existing)
+- [ ] Implement footer reminder about local storage
+  - [ ] Persistent across all pages
+  - [ ] Subtle but visible
+  - [ ] Link to export functionality
+
+### Phase 16: Testing & Quality Assurance
+- [ ] Functional testing
+  - [ ] Create/edit/delete class lists
+  - [ ] Add/remove students (single and bulk)
+  - [ ] Add/remove incompatible pairs
+  - [ ] Generate groups with various sizes
+  - [ ] Export/import configuration
+  - [ ] Switch between teacher and student views
+- [ ] Edge case testing
+  - [ ] Single student in class
+  - [ ] Many incompatible pairs
+  - [ ] Impossible constraint satisfaction
+  - [ ] Empty class list
+  - [ ] Browser storage limits
+- [ ] Cross-browser testing
+  - [ ] All features work in supported browsers
+  - [ ] Visual consistency across browsers
+- [ ] Usability testing
+  - [ ] Test with actual teachers if possible
+  - [ ] Gather feedback on workflow
+  - [ ] Iterate based on feedback
+
+### Phase 17: Documentation & Deployment
+- [ ] Update README with new features and tech stack
+- [ ] Verify GitHub Pages deployment configuration
+- [ ] Add meta tags for social sharing
+  - [ ] Open Graph tags
+  - [ ] Twitter card tags
+  - [ ] Favicon and app icons
+
+### Phase 18: Future Enhancements (Post-MVP)
+- [x] ~~Group history and undo/redo~~ (deferred)
+- [x] ~~Group locking (pin students to groups)~~ (deferred)
+- [ ] Additional teaching tools (see Multi-Tool Architecture below)
+
+---
+
+## Multi-Tool Architecture
+
+### Vision
+
+Emma's Teacher Tools is designed to be a **suite of teaching utilities** rather than a single-purpose application. The GroupThing tool is the first of many classroom management tools.
+
+### Proposed Structure
+
+```
+teachertools/
+├── index.html                    # Tool launcher/dashboard (CURRENT: GroupThing app)
+├── tools/
+│   ├── groupthing/
+│   │   ├── index.html           # Move current index.html here
+│   │   ├── js/                  # Tool-specific JS
+│   │   └── README.md            # Tool documentation
+│   ├── timer/                   # Future: Classroom timer
+│   │   ├── index.html
+│   │   └── ...
+│   ├── randomiser/              # Future: Random student picker
+│   │   ├── index.html
+│   │   └── ...
+│   └── quiz/                    # Future: Quick quiz generator
+│       ├── index.html
+│       └── ...
+├── shared/
+│   ├── styles/                  # Shared CSS framework
+│   │   ├── variables.css        # Design tokens
+│   │   ├── reset.css
+│   │   ├── utilities.css
+│   │   ├── layout.css
+│   │   └── components.css
+│   └── js/
+│       ├── storage.js           # Generic storage wrapper
+│       ├── utils.js             # Shared utilities
+│       └── navigation.js        # Tool switching
+├── assets/
+│   ├── icons/                   # Tool icons
+│   └── images/
+├── README.md
+└── DEPLOYMENT.md
+```
+
+### Tool Dashboard Design
+
+**Landing Page (New index.html):**
+```html
+┌─────────────────────────────────────┐
+│  Emma's Teacher Tools     📚 About  │
+├─────────────────────────────────────┤
+│                                     │
+│  ┌───────────┐  ┌───────────┐     │
+│  │ 👥        │  │ ⏱️         │     │
+│  │ GroupThing│  │ Timer     │     │
+│  │ Generate  │  │ Coming    │     │
+│  │ groups    │  │ Soon      │     │
+│  └───────────┘  └───────────┘     │
+│                                     │
+│  ┌───────────┐  ┌───────────┐     │
+│  │ 🎲        │  │ 📝        │     │
+│  │ Randomiser│  │ Quiz Maker│     │
+│  │ Coming    │  │ Coming    │     │
+│  │ Soon      │  │ Soon      │     │
+│  └───────────┘  └───────────┘     │
+│                                     │
+│  Recently Used: GroupThing (2m ago)│
+└─────────────────────────────────────┘
+```
+
+### Storage Namespace Strategy
+
+**Current:** `emmaTeacherTools_v2` (single namespace)
+
+**Proposed:**
+- `emmaTools_groupthing_v1` - GroupThing data
+- `emmaTools_timer_v1` - Timer presets
+- `emmaTools_randomiser_v1` - Random picker settings
+- `emmaTools_meta` - Cross-tool metadata (favourites, recent tools)
+
+**Benefits:**
+- Tools can't interfere with each other's data
+- Individual tool data can be cleared without affecting others
+- Easy to add new tools without migration
+- Export/import can be tool-specific or global
+
+### Tool Integration Guidelines
+
+Each new tool should:
+1. **Be self-contained** - All tool-specific code in `tools/[toolname]/`
+2. **Use shared CSS** - Import from `shared/styles/`
+3. **Use shared utilities** - Import from `shared/js/`
+4. **Follow design system** - Use existing colour palette and components
+5. **Namespaced storage** - Use tool-specific localStorage key
+6. **Include metadata** - Tool name, description, icon, version in manifest
+7. **Mobile-first** - Responsive design for all screen sizes
+8. **Offline-capable** - Work without internet after initial load
+
+### Tool Manifest Example
+
+```json
+{
+  "id": "groupthing",
+  "name": "GroupThing",
+  "description": "Generate random student groups with constraints",
+  "icon": "👥",
+  "version": "2.0.0",
+  "author": "Sam McLeod",
+  "path": "tools/groupthing/index.html",
+  "tags": ["groups", "students", "classroom"],
+  "storageKey": "emmaTools_groupthing_v1",
+  "offlineCapable": true
+}
+```
+
+### Implementation Phases
+
+#### Phase 1: Restructure (Optional)
+- Move current `index.html` to `tools/groupthing/index.html`
+- Move CSS to `shared/styles/`
+- Move generic JS to `shared/js/`
+- Create new landing page at root `index.html`
+- Update all paths and references
+
+**Alternative:** Keep current structure, add new tools as separate top-level files
+
+#### Phase 2: Add Navigation
+- Create tool launcher page with cards
+- Add "Back to Tools" button in each tool
+- Recent tools tracking
+- Favourites system
+
+#### Phase 3: New Tools
+- Classroom Timer (Pomodoro-style)
+- Random Student Picker (with fairness tracking)
+- Quick Quiz Generator
+- Seating Chart Designer
+
+### Migration Path
+
+**Option A: Big Bang** (Restructure everything at once)
+- Pros: Clean, consistent structure
+- Cons: Breaking changes for existing users
+
+**Option B: Gradual** (Keep current, add new tools alongside)
+- Pros: No breaking changes
+- Cons: Inconsistent structure until migration
+
+**Recommendation:** Option B - Keep `index.html` as GroupThing, add new tools as `timer.html`, `randomiser.html`, etc. Add a simple navigation menu to each tool's header.
+
+---
+
+## Development Tips
+
+**Suggested Order:**
+Work through phases 1-17 sequentially. Don't skip ahead as later phases depend on earlier ones.
+
+**Testing Strategy:**
+Test each phase thoroughly before moving to the next. Use browser DevTools and test on real devices early and often.
+
+**Git Workflow:**
+- Create feature branches for each phase
+- Commit frequently with clear messages
+- Use conventional commits (feat:, fix:, docs:, etc.)
+- Tag releases (v2.0.0 for rewrite)
+
+**Code Quality:**
+- Keep functions small and focused
+- Use meaningful variable names
+- Comment complex logic
+- Maintain separation of concerns (data/UI/storage)
+
+**Performance Budget:**
+- Total page size: <500KB
+- Time to interactive: <3 seconds on 3G
+- First contentful paint: <1.5 seconds
 
 ## Footer Notice
 

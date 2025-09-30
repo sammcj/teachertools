@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Classroom Timer - Emma's Teacher Tools</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/utilities.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+
+  <!-- Preload fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* Timer-specific styles */
+    .timer-view {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .timer-display {
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 700;
+      font-family: 'Poppins', sans-serif;
+      text-align: center;
+      line-height: 1;
+      color: var(--text-primary);
+      user-select: none;
+      margin: 0;
+    }
+
+    .timer-display.warning {
+      color: var(--warning);
+    }
+
+    .timer-display.danger {
+      color: var(--error);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    .progress-ring {
+      width: clamp(300px, 50vw, 500px);
+      height: clamp(300px, 50vw, 500px);
+      margin: 0 auto;
+      position: relative;
+    }
+
+    .progress-ring svg {
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring-circle {
+      stroke: var(--lavender);
+      stroke-width: 8;
+      fill: none;
+      transition: stroke-dashoffset 0.3s ease, stroke 0.3s ease;
+    }
+
+    .progress-ring-bg {
+      stroke: var(--border-color);
+      stroke-width: 8;
+      fill: none;
+    }
+
+    .progress-ring.warning .progress-ring-circle {
+      stroke: var(--warning);
+    }
+
+    .progress-ring.danger .progress-ring-circle {
+      stroke: var(--error);
+    }
+
+    .timer-mode-selector {
+      display: flex;
+      gap: var(--space-sm);
+      justify-content: center;
+      margin-bottom: var(--space-lg);
+    }
+
+    .mode-btn {
+      padding: var(--space-sm) var(--space-lg);
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-weight: 500;
+    }
+
+    .mode-btn:hover {
+      border-color: var(--lavender);
+    }
+
+    .mode-btn.active {
+      background: var(--lavender);
+      border-color: var(--lavender);
+      color: #2a2a5a;
+    }
+
+    .preset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: var(--space-sm);
+      max-width: 600px;
+      margin: 0 auto var(--space-lg);
+    }
+
+    .preset-btn {
+      padding: var(--space-md);
+      background: var(--mint);
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 600;
+      font-size: var(--text-lg);
+      transition: all var(--transition-fast);
+    }
+
+    .preset-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .control-panel {
+      display: flex;
+      gap: var(--space-md);
+      justify-content: center;
+      flex-wrap: wrap;
+      margin: var(--space-lg) 0;
+    }
+
+    .control-btn {
+      min-width: 120px;
+      padding: var(--space-md) var(--space-xl);
+      font-size: var(--text-xl);
+      font-weight: 600;
+      border: none;
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .control-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .control-btn.play {
+      background: var(--success);
+      color: white;
+    }
+
+    .control-btn.pause {
+      background: var(--warning);
+      color: white;
+    }
+
+    .control-btn.reset {
+      background: var(--error);
+      color: white;
+    }
+
+    .control-btn.add-time {
+      background: var(--lavender);
+      color: #2a2a5a;
+    }
+
+    .custom-time-input {
+      display: flex;
+      gap: var(--space-sm);
+      justify-content: center;
+      align-items: center;
+      margin: var(--space-lg) 0;
+    }
+
+    .custom-time-input input {
+      width: 80px;
+      text-align: center;
+      font-size: var(--text-xl);
+      font-weight: 600;
+      padding: var(--space-sm);
+    }
+
+    .settings-panel {
+      max-width: 400px;
+      margin: var(--space-lg) auto;
+      padding: var(--space-lg);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+    }
+
+    .fullscreen-timer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: var(--bg-primary);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xl);
+    }
+
+    .fullscreen-timer .timer-display {
+      font-size: clamp(8rem, 25vw, 18rem);
+    }
+
+    .fullscreen-timer .progress-ring {
+      width: clamp(400px, 60vw, 700px);
+      height: clamp(400px, 60vw, 700px);
+    }
+
+    .fullscreen-timer .exit-fullscreen {
+      position: absolute;
+      top: var(--space-md);
+      right: var(--space-md);
+      padding: var(--space-sm) var(--space-lg);
+      background: var(--bg-secondary);
+      border: 2px solid var(--border-color);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-weight: 500;
+    }
+  </style>
+</head>
+<body class="timer-view">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container flex items-center justify-between">
+      <h1 class="text-2xl font-bold">⏱️ Classroom Timer</h1>
+      <div class="flex gap-sm">
+        <a href="index.html" class="btn btn-sm btn-secondary">
+          👥 GroupThing
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="container" style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: var(--space-xl) var(--space-md);">
+    <!-- Mode selector -->
+    <div class="timer-mode-selector">
+      <button class="mode-btn active" data-mode="countdown">⏱️ Countdown</button>
+      <button class="mode-btn" data-mode="pomodoro">🍅 Pomodoro</button>
+      <button class="mode-btn" data-mode="stopwatch">⏲️ Stopwatch</button>
+    </div>
+
+    <!-- Timer display with progress ring -->
+    <div class="progress-ring" id="progress-ring">
+      <svg width="100%" height="100%" viewBox="0 0 400 400">
+        <circle class="progress-ring-bg" cx="200" cy="200" r="180"></circle>
+        <circle class="progress-ring-circle" cx="200" cy="200" r="180"
+                stroke-dasharray="1130.97"
+                stroke-dashoffset="0"
+                id="progress-circle"></circle>
+      </svg>
+      <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 100%;">
+        <div class="timer-display" id="timer-display">05:00</div>
+      </div>
+    </div>
+
+    <!-- Control buttons -->
+    <div class="control-panel">
+      <button class="control-btn play" id="play-btn">▶️ Start</button>
+      <button class="control-btn pause hidden" id="pause-btn">⏸️ Pause</button>
+      <button class="control-btn reset" id="reset-btn">🔄 Reset</button>
+      <button class="control-btn add-time" id="add-time-btn">➕ +1 Min</button>
+      <button class="control-btn" id="fullscreen-btn">🖥️ Fullscreen</button>
+    </div>
+
+    <!-- Quick presets -->
+    <div class="panel">
+      <h3 class="text-center mb-md font-semibold">Quick Presets</h3>
+      <div class="preset-grid">
+        <button class="preset-btn" data-minutes="1">1 min</button>
+        <button class="preset-btn" data-minutes="3">3 min</button>
+        <button class="preset-btn" data-minutes="5">5 min</button>
+        <button class="preset-btn" data-minutes="10">10 min</button>
+        <button class="preset-btn" data-minutes="15">15 min</button>
+        <button class="preset-btn" data-minutes="30">30 min</button>
+      </div>
+    </div>
+
+    <!-- Custom time input -->
+    <div class="panel mt-lg">
+      <h3 class="text-center mb-md font-semibold">Custom Time</h3>
+      <div class="custom-time-input">
+        <input type="number" id="custom-minutes" class="input" min="0" max="99" value="5" placeholder="MM">
+        <span class="text-xl font-bold">:</span>
+        <input type="number" id="custom-seconds" class="input" min="0" max="59" value="0" placeholder="SS">
+        <button class="btn btn-primary" id="set-custom-btn">Set Time</button>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div class="settings-panel">
+      <h3 class="font-semibold mb-md">Settings</h3>
+      <div class="stack-sm">
+        <label class="checkbox">
+          <input type="checkbox" id="sound-enabled" checked>
+          <span>Enable sound</span>
+        </label>
+        <label class="checkbox">
+          <input type="checkbox" id="auto-fullscreen">
+          <span>Auto fullscreen when timer starts</span>
+        </label>
+        <div class="flex items-center gap-sm">
+          <label class="font-semibold text-sm">Volume:</label>
+          <input type="range" id="volume-slider" class="w-full" min="0" max="100" value="50" style="accent-color: var(--lavender);">
+          <span id="volume-display" class="text-sm font-semibold">50%</span>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/utils.js"></script>
+  <script>
+    class ClassroomTimer {
+      constructor() {
+        this.STORAGE_KEY = 'emmaTools_timer_v1';
+        this.mode = 'countdown';
+        this.totalSeconds = 300; // 5 minutes default
+        this.remainingSeconds = 300;
+        this.isRunning = false;
+        this.intervalId = null;
+        this.pomodoroState = 'work'; // work or break
+        this.pomodoroWorkTime = 25 * 60;
+        this.pomodoroBreakTime = 5 * 60;
+
+        this.init();
+      }
+
+      init() {
+        this.cacheDOM();
+        this.bindEvents();
+        this.loadSettings();
+        this.updateDisplay();
+      }
+
+      cacheDOM() {
+        this.timerDisplay = document.getElementById('timer-display');
+        this.progressRing = document.getElementById('progress-ring');
+        this.progressCircle = document.getElementById('progress-circle');
+        this.playBtn = document.getElementById('play-btn');
+        this.pauseBtn = document.getElementById('pause-btn');
+        this.resetBtn = document.getElementById('reset-btn');
+        this.addTimeBtn = document.getElementById('add-time-btn');
+        this.fullscreenBtn = document.getElementById('fullscreen-btn');
+        this.modeBtns = document.querySelectorAll('.mode-btn');
+        this.presetBtns = document.querySelectorAll('.preset-btn');
+        this.customMinutes = document.getElementById('custom-minutes');
+        this.customSeconds = document.getElementById('custom-seconds');
+        this.setCustomBtn = document.getElementById('set-custom-btn');
+        this.soundEnabled = document.getElementById('sound-enabled');
+        this.autoFullscreen = document.getElementById('auto-fullscreen');
+        this.volumeSlider = document.getElementById('volume-slider');
+        this.volumeDisplay = document.getElementById('volume-display');
+      }
+
+      bindEvents() {
+        this.playBtn.addEventListener('click', () => this.start());
+        this.pauseBtn.addEventListener('click', () => this.pause());
+        this.resetBtn.addEventListener('click', () => this.reset());
+        this.addTimeBtn.addEventListener('click', () => this.addTime(60));
+        this.fullscreenBtn.addEventListener('click', () => this.toggleFullscreen());
+
+        this.modeBtns.forEach(btn => {
+          btn.addEventListener('click', () => this.switchMode(btn.dataset.mode));
+        });
+
+        this.presetBtns.forEach(btn => {
+          btn.addEventListener('click', () => this.setPreset(parseInt(btn.dataset.minutes) * 60));
+        });
+
+        this.setCustomBtn.addEventListener('click', () => this.setCustomTime());
+
+        this.volumeSlider.addEventListener('input', (e) => {
+          this.volumeDisplay.textContent = e.target.value + '%';
+          this.saveSettings();
+        });
+
+        this.soundEnabled.addEventListener('change', () => this.saveSettings());
+        this.autoFullscreen.addEventListener('change', () => this.saveSettings());
+      }
+
+      switchMode(mode) {
+        this.mode = mode;
+        this.modeBtns.forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.mode === mode);
+        });
+
+        if (mode === 'countdown') {
+          this.setPreset(300); // 5 minutes
+        } else if (mode === 'pomodoro') {
+          this.pomodoroState = 'work';
+          this.setPreset(this.pomodoroWorkTime);
+        } else if (mode === 'stopwatch') {
+          this.totalSeconds = 0;
+          this.remainingSeconds = 0;
+          this.updateDisplay();
+        }
+
+        this.reset();
+      }
+
+      setPreset(seconds) {
+        this.totalSeconds = seconds;
+        this.remainingSeconds = seconds;
+        this.reset();
+        this.updateDisplay();
+      }
+
+      setCustomTime() {
+        const minutes = parseInt(this.customMinutes.value) || 0;
+        const seconds = parseInt(this.customSeconds.value) || 0;
+        const totalSeconds = minutes * 60 + seconds;
+
+        if (totalSeconds > 0) {
+          this.setPreset(totalSeconds);
+        }
+      }
+
+      start() {
+        if (this.isRunning) return;
+
+        this.isRunning = true;
+        this.playBtn.classList.add('hidden');
+        this.pauseBtn.classList.remove('hidden');
+
+        if (this.autoFullscreen.checked && !document.fullscreenElement) {
+          this.toggleFullscreen();
+        }
+
+        this.intervalId = setInterval(() => this.tick(), 1000);
+      }
+
+      pause() {
+        this.isRunning = false;
+        this.pauseBtn.classList.add('hidden');
+        this.playBtn.classList.remove('hidden');
+        clearInterval(this.intervalId);
+      }
+
+      reset() {
+        this.pause();
+
+        if (this.mode === 'stopwatch') {
+          this.remainingSeconds = 0;
+          this.totalSeconds = 0;
+        } else {
+          this.remainingSeconds = this.totalSeconds;
+        }
+
+        this.updateDisplay();
+      }
+
+      addTime(seconds) {
+        this.totalSeconds += seconds;
+        this.remainingSeconds += seconds;
+        this.updateDisplay();
+      }
+
+      tick() {
+        if (this.mode === 'stopwatch') {
+          this.remainingSeconds++;
+          this.totalSeconds++;
+        } else {
+          this.remainingSeconds--;
+
+          if (this.remainingSeconds <= 0) {
+            this.remainingSeconds = 0;
+            this.pause();
+            this.onTimerComplete();
+          }
+        }
+
+        this.updateDisplay();
+      }
+
+      onTimerComplete() {
+        if (this.soundEnabled.checked) {
+          this.playSound();
+        }
+
+        Utils.showToast('Timer finished!', 'success');
+
+        // Handle Pomodoro mode
+        if (this.mode === 'pomodoro') {
+          if (this.pomodoroState === 'work') {
+            this.pomodoroState = 'break';
+            this.setPreset(this.pomodoroBreakTime);
+            Utils.showToast('Break time! 🎉', 'success');
+          } else {
+            this.pomodoroState = 'work';
+            this.setPreset(this.pomodoroWorkTime);
+            Utils.showToast('Back to work! 💪', 'info');
+          }
+        }
+      }
+
+      playSound() {
+        // Simple beep using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        oscillator.frequency.value = 800;
+        oscillator.type = 'sine';
+
+        const volume = this.volumeSlider.value / 100;
+        gainNode.gain.setValueAtTime(volume * 0.3, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.5);
+      }
+
+      updateDisplay() {
+        const minutes = Math.floor(Math.abs(this.remainingSeconds) / 60);
+        const seconds = Math.abs(this.remainingSeconds) % 60;
+        const sign = this.remainingSeconds < 0 ? '-' : '';
+
+        this.timerDisplay.textContent = `${sign}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+        // Update progress circle (only for countdown modes)
+        if (this.mode !== 'stopwatch' && this.totalSeconds > 0) {
+          const circumference = 1130.97;
+          const progress = this.remainingSeconds / this.totalSeconds;
+          const offset = circumference * (1 - progress);
+          this.progressCircle.style.strokeDashoffset = offset;
+
+          // Colour coding
+          this.progressRing.classList.remove('warning', 'danger');
+          this.timerDisplay.classList.remove('warning', 'danger');
+
+          if (progress < 0.1) {
+            this.progressRing.classList.add('danger');
+            this.timerDisplay.classList.add('danger');
+          } else if (progress < 0.3) {
+            this.progressRing.classList.add('warning');
+            this.timerDisplay.classList.add('warning');
+          }
+        } else {
+          this.progressCircle.style.strokeDashoffset = 0;
+        }
+      }
+
+      toggleFullscreen() {
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen();
+        } else {
+          document.exitFullscreen();
+        }
+      }
+
+      loadSettings() {
+        try {
+          const data = localStorage.getItem(this.STORAGE_KEY);
+          if (data) {
+            const settings = JSON.parse(data);
+            this.soundEnabled.checked = settings.soundEnabled ?? true;
+            this.autoFullscreen.checked = settings.autoFullscreen ?? false;
+            this.volumeSlider.value = settings.volume ?? 50;
+            this.volumeDisplay.textContent = this.volumeSlider.value + '%';
+          }
+        } catch (error) {
+          console.error('Error loading timer settings:', error);
+        }
+      }
+
+      saveSettings() {
+        try {
+          const settings = {
+            soundEnabled: this.soundEnabled.checked,
+            autoFullscreen: this.autoFullscreen.checked,
+            volume: parseInt(this.volumeSlider.value)
+          };
+          localStorage.setItem(this.STORAGE_KEY, JSON.stringify(settings));
+        } catch (error) {
+          console.error('Error saving timer settings:', error);
+        }
+      }
+    }
+
+    // Initialize timer when DOM is ready
+    document.addEventListener('DOMContentLoaded', () => {
+      new ClassroomTimer();
+    });
+  </script>
+</body>
+</html>

@@ -1,35 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GroupThing - Student View</title>
-    <link rel="stylesheet" href="css/fonts.css">
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/student.css">
-    <link rel="stylesheet" href="css/responsive.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Class Groups - Student View</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/utilities.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/student.css">
+
+  <!-- Preload fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 </head>
-<body style="width: 100%; overflow-x: hidden; margin: 0; padding: 0;">
-    <header>
-        <h1>Emma's Teacher Tools - GroupThing - <span id="class-name">Class Groups</span></h1>
-        <a href="index.html" class="view-toggle">Switch to Teacher View</a>
-    </header>
+<body>
+  <!-- Confetti container -->
+  <div id="confetti-container" class="confetti-container"></div>
 
-    <main class="student-container">
-        <div id="groups-container" class="groups-container">
-            <!-- Groups will be displayed here -->
-            <div class="empty-state">
-                <p>No groups have been generated yet.</p>
-                <p>Please ask your teacher to generate groups.</p>
-            </div>
-        </div>
-    </main>
+  <!-- Header -->
+  <header class="student-header">
+    <div class="container">
+      <h1 class="text-3xl font-bold">
+        <span id="class-name">Class Groups</span>
+      </h1>
+      <a href="teacher.html" class="btn btn-sm btn-primary">
+        👨‍🏫 Teacher View
+      </a>
+    </div>
+  </header>
 
-    <!-- Footer removed to save screen space -->
+  <!-- Main content -->
+  <main class="student-main">
+    <div id="groups-container" class="groups-container">
+      <!-- Groups will be displayed here -->
+    </div>
 
-    <script src="js/storage.js"></script>
-    <script src="js/common.js"></script>
-    <script src="js/responsive.js"></script>
-    <script src="js/student.js"></script>
+    <!-- Empty state -->
+    <div id="empty-state" class="empty-state hidden">
+      <div class="empty-state-icon">📝</div>
+      <p class="empty-state-text">No groups have been generated yet</p>
+      <p class="text-secondary">Please ask your teacher to generate groups</p>
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/groups.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/student.js"></script>
 </body>
 </html>

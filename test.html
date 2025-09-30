@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Group Generation Test</title>
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/utilities.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+</head>
+<body class="app-layout">
+  <header class="app-header">
+    <div class="container">
+      <h1 class="text-2xl font-bold">Group Generation Tests</h1>
+    </div>
+  </header>
+
+  <main class="app-main">
+    <div class="container">
+      <div class="panel">
+        <h2 class="panel-title mb-md">Test Results</h2>
+        <div id="test-results" class="stack-lg"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/groups.js"></script>
+  <script>
+    const testResults = document.getElementById('test-results');
+
+    const tests = [
+      {
+        name: '5 students, group size 2',
+        students: ['Alice', 'Bob', 'Charlie', 'David', 'Eve'],
+        groupSize: 2,
+        incompatible: []
+      },
+      {
+        name: '9 students, group size 3 (perfect fit)',
+        students: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'],
+        groupSize: 3,
+        incompatible: []
+      },
+      {
+        name: '10 students, group size 3 (would create 1 person group)',
+        students: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+        groupSize: 3,
+        incompatible: []
+      },
+      {
+        name: '7 students with incompatible pair',
+        students: ['Alice', 'Bob', 'Charlie', 'David', 'Eve', 'Frank', 'Grace'],
+        groupSize: 3,
+        incompatible: [['Alice', 'Bob']]
+      },
+      {
+        name: '4 students, group size 3 (single group)',
+        students: ['Alice', 'Bob', 'Charlie', 'David'],
+        groupSize: 3,
+        incompatible: []
+      }
+    ];
+
+    tests.forEach(test => {
+      const groups = Groups.generate(test.students, test.groupSize, test.incompatible);
+
+      const hasSinglePerson = groups.some(g => g.length === 1);
+      const passed = !hasSinglePerson;
+
+      const violatesConstraints = test.incompatible.some(([s1, s2]) => {
+        return groups.some(group => group.includes(s1) && group.includes(s2));
+      });
+
+      const testDiv = document.createElement('div');
+      testDiv.className = 'card';
+      testDiv.innerHTML = `
+        <h3 class="text-lg font-semibold mb-sm">${test.name}</h3>
+        <p class="text-sm text-secondary mb-sm">
+          ${test.students.length} students, group size ${test.groupSize}
+        </p>
+        <div class="flex gap-sm mb-md">
+          <span class="badge ${passed ? 'bg-mint' : 'bg-error'} text-sm">
+            ${passed ? '✓ PASSED' : '✗ FAILED'} - No single-person groups
+          </span>
+          ${test.incompatible.length > 0 ? `
+            <span class="badge ${!violatesConstraints ? 'bg-mint' : 'bg-error'} text-sm">
+              ${!violatesConstraints ? '✓' : '✗'} Constraints satisfied
+            </span>
+          ` : ''}
+        </div>
+        <div class="stack-sm">
+          ${groups.map((group, i) => `
+            <div class="p-sm rounded-md bg-gray">
+              <strong>Group ${i + 1} (${group.length} students):</strong> ${group.join(', ')}
+            </div>
+          `).join('')}
+        </div>
+      `;
+
+      testResults.appendChild(testDiv);
+    });
+  </script>
+</body>
+</html>

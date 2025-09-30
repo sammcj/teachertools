@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emma's Teacher Tools - GroupThing</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/utilities.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+
+  <!-- Preload fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+</head>
+<body class="app-layout">
+  <!-- Header -->
+  <header class="app-header">
+    <div class="container flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Emma's Teacher Tools</h1>
+      <div class="cluster">
+        <button id="export-btn" class="btn btn-sm btn-secondary" title="Export config">
+          💾 Export
+        </button>
+        <button id="import-btn" class="btn btn-sm btn-secondary" title="Import config">
+          📂 Import
+        </button>
+        <a href="student.html" id="student-view-link" class="btn btn-sm btn-primary">
+          🎓 Student View
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="app-main">
+    <div class="teacher-layout">
+      <!-- Sidebar: Class Lists -->
+      <aside class="sidebar">
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">Class Lists</h2>
+          </div>
+
+          <div id="class-lists" class="stack-sm">
+            <!-- Class lists will be populated here -->
+          </div>
+
+          <div class="stack-sm mt-md">
+            <button id="new-list-btn" class="btn btn-sm btn-primary w-full">
+              📝 New List
+            </button>
+            <button id="sample-data-btn" class="btn btn-sm btn-secondary w-full">
+              📚 Load Sample
+            </button>
+            <button id="clear-all-btn" class="btn btn-sm btn-danger w-full">
+              🗑️ Clear All
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main content area -->
+      <div class="sidebar-content stack-lg">
+        <!-- Current List Panel -->
+        <section class="panel">
+          <div class="panel-header flex items-center justify-between">
+            <h2 class="panel-title">
+              <span id="current-list-name">Select a Class List</span>
+            </h2>
+            <select id="list-selector" class="dropdown" style="max-width: 200px;">
+              <option value="">Select a list...</option>
+            </select>
+          </div>
+
+          <!-- Group Generation Controls -->
+          <div id="group-controls" class="hidden">
+            <div class="stack">
+              <!-- Generate Button and Emoji Toggle -->
+              <div class="flex items-center justify-between gap-md">
+                <button id="generate-btn" class="btn btn-lg btn-primary">
+                  🔄 Generate Groups
+                </button>
+                <label class="checkbox">
+                  <input type="checkbox" id="emoji-toggle" checked>
+                  <span>Use emoji names</span>
+                </label>
+              </div>
+
+              <!-- Group Size Slider -->
+              <div>
+                <div class="flex items-center justify-between mb-sm">
+                  <label class="font-semibold">Group Size:</label>
+                  <span id="group-size-display" class="text-lg font-bold text-primary">3</span>
+                </div>
+                <input
+                  type="range"
+                  id="group-size-slider"
+                  min="1"
+                  max="15"
+                  value="3"
+                  class="w-full"
+                  style="accent-color: var(--lavender);">
+                <div class="flex justify-between text-xs text-secondary mt-xs">
+                  <span>1</span>
+                  <span>5</span>
+                  <span>10</span>
+                  <span>15</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Student Management -->
+        <section id="student-panel" class="panel hidden">
+          <div class="panel-header">
+            <h3 class="panel-title">Student Names</h3>
+          </div>
+
+          <div id="student-list" class="stack-sm mb-md" style="max-height: 300px; overflow-y: auto;">
+            <!-- Students will be populated here -->
+          </div>
+
+          <div class="stack-sm">
+            <textarea
+              id="student-input"
+              class="input"
+              placeholder="Enter student name(s) - one per line for multiple students
+Shift+Enter for new line"
+              rows="3"></textarea>
+            <div class="flex gap-sm">
+              <button id="add-student-btn" class="btn btn-secondary">
+                ➕ Add
+              </button>
+              <button id="remove-student-btn" class="btn btn-danger">
+                ➖ Remove Selected
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- Grouping Rules -->
+        <section id="rules-panel" class="panel hidden">
+          <div class="panel-header cursor-pointer" id="rules-header">
+            <h3 class="panel-title flex items-center justify-between">
+              <span>Grouping Rules</span>
+              <span id="rules-toggle" class="text-secondary">▼</span>
+            </h3>
+          </div>
+
+          <div id="rules-content" class="hidden">
+            <p class="text-sm text-secondary mb-md">
+              Define students who cannot be grouped together
+            </p>
+
+            <div id="incompatible-list" class="stack-sm mb-md" style="max-height: 200px; overflow-y: auto;">
+              <!-- Incompatible pairs will be populated here -->
+            </div>
+
+            <div class="stack-sm">
+              <select id="student-selector" class="dropdown">
+                <option value="">Select a student</option>
+              </select>
+
+              <div id="selected-students" class="flex flex-wrap gap-sm mb-sm">
+                <!-- Selected students tags will appear here -->
+              </div>
+
+              <div class="flex gap-sm">
+                <button id="add-rule-btn" class="btn btn-secondary">
+                  👥 Add Grouping
+                </button>
+                <button id="remove-rule-btn" class="btn btn-danger">
+                  ❌ Remove Selected
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Generated Groups Preview -->
+        <section id="groups-panel" class="panel hidden">
+          <div class="panel-header">
+            <h3 class="panel-title">Generated Groups</h3>
+          </div>
+
+          <div id="groups-preview" class="grid-auto-fit">
+            <!-- Groups will be populated here -->
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="app-footer">
+    <p>All data is stored <em>locally</em> in your browser. Remember to export your config as a backup!</p>
+  </footer>
+
+  <!-- Modals -->
+
+  <!-- List Modal -->
+  <div id="list-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" id="list-modal-close">&times;</span>
+      <div class="modal-header">
+        <h2 class="modal-title" id="list-modal-title">Create New Class List</h2>
+      </div>
+      <div class="stack-sm">
+        <label for="list-name-input" class="font-semibold">List Name:</label>
+        <input
+          type="text"
+          id="list-name-input"
+          class="input"
+          placeholder="e.g., Class 1A">
+      </div>
+      <div class="modal-actions">
+        <button id="save-list-btn" class="btn btn-primary">💾 Save</button>
+        <button id="cancel-list-btn" class="btn btn-secondary">❌ Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Modal -->
+  <div id="import-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" id="import-modal-close">&times;</span>
+      <div class="modal-header">
+        <h2 class="modal-title">Import Settings</h2>
+      </div>
+      <p class="text-sm text-secondary mb-md">
+        Select a backup file to import your class lists and settings.
+      </p>
+      <div class="stack-sm">
+        <input
+          type="file"
+          id="import-file-input"
+          accept=".json"
+          class="input">
+        <div id="import-error" class="text-error text-sm hidden"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="confirm-import-btn" class="btn btn-primary">📥 Import</button>
+        <button id="cancel-import-btn" class="btn btn-secondary">❌ Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/groups.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/teacher.js"></script>
+</body>
+</html>

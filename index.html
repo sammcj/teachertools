@@ -1,195 +1,304 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Emma's Teacher Tools</title>
-    <link rel="stylesheet" href="css/fonts.css">
-    <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/main.css">
-    <link rel="stylesheet" href="css/responsive.css">
-    <style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emma's Teacher Tools - GroupThing</title>
 
-        .welcome-banner {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            text-align: center;
-            background-color: rgba(255, 255, 255, 0.9);
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 15px var(--shadow);
-            z-index: 10;
-            max-width: 600px;
-            animation: fadeIn 1s ease-out;
-            display: none;
-        }
+  <!-- Styles -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <link rel="stylesheet" href="styles/variables.css">
+  <link rel="stylesheet" href="styles/reset.css">
+  <link rel="stylesheet" href="styles/utilities.css">
+  <link rel="stylesheet" href="styles/layout.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/student.css">
 
-        .welcome-banner.show {
-            display: block;
-        }
+  <!-- Preload fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 
-        .welcome-banner h2 {
-            color: var(--primary-color);
-            margin-bottom: 1rem;
-        }
-
-        .welcome-banner .close-welcome {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            cursor: pointer;
-            font-size: 1.2rem;
-        }
-
-        .tools-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 1.5rem;
-            padding: 2rem;
-        }
-
-        .tool-card {
-            background-color: var(--white);
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 5px var(--shadow);
-            text-align: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .tool-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 5px 15px var(--shadow);
-        }
-
-        .tool-card h3 {
-            color: var(--primary-color);
-            margin-bottom: 0.5rem;
-        }
-
-        .tool-card p {
-            margin-bottom: 1rem;
-            color: var(--text-color);
-        }
-
-        .tool-card .btn {
-            display: inline-block;
-        }
-
-        /* Tool content container styles (moved to responsive.css) */
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* Hide welcome banner after first visit */
-        body.visited .welcome-banner {
-            display: none;
-        }
-    </style>
+  <style>
+    /* View switching */
+    .view {
+      display: none;
+    }
+    .view.active {
+      display: block;
+    }
+    body.student-mode {
+      background: linear-gradient(135deg, var(--bg-primary) 0%, #f8f9fa 100%);
+    }
+  </style>
 </head>
 <body>
-    <main style="padding: 0; max-width: 100%; width: 100%; height: 100vh; overflow: hidden; position: relative;">
-        <!-- Welcome banner removed as requested -->
-
-        <div id="tool-content-container" class="tool-content-container" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0; right: 0; bottom: 0;">
-            <!-- Tool content will be loaded here dynamically -->
-            <div class="loading-indicator">Loading GroupThing...</div>
+  <!-- Teacher View -->
+  <div id="teacher-view" class="view active">
+    <div class="app-layout">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="container flex items-center justify-between">
+          <h1 class="text-2xl font-bold">Emma's Teacher Tools</h1>
+          <div class="flex gap-sm">
+            <button id="export-btn" class="btn btn-sm btn-secondary" title="Export config">
+              💾 Export
+            </button>
+            <button id="import-btn" class="btn btn-sm btn-secondary" title="Import config">
+              📂 Import
+            </button>
+            <button id="switch-to-student-btn" class="btn btn-sm btn-primary">
+              🎓 Student View
+            </button>
+            <a href="timer.html" class="btn btn-sm btn-secondary">
+              ⏱️ Timer
+            </a>
+          </div>
         </div>
+      </header>
 
-        <footer style="position: absolute; bottom: 0; width: 100%; background-color: rgba(255, 255, 255, 0.8); padding: 0.5rem; text-align: center; font-size: 0.8rem; z-index: 10;">
-            <p>All data is stored <i>locally</i> in your browser. Remember to export your config as a backup!</p>
-        </footer>
+      <!-- Main app content -->
+      <div class="app-container">
+        <!-- Sidebar with class lists -->
+        <aside class="app-sidebar">
+          <div class="sidebar-inner">
+            <div class="panel">
+              <h2 class="panel-title mb-md">Class Lists</h2>
+              <div id="class-lists" class="stack"></div>
+              <div class="divider"></div>
+              <div class="stack-sm">
+                <button id="new-list-btn" class="btn btn-primary w-full">
+                  🆕 New List
+                </button>
+                <button id="sample-data-btn" class="btn btn-secondary w-full">
+                  📋 Load Sample
+                </button>
+                <button id="clear-all-btn" class="btn btn-sm btn-danger w-full">
+                  🗑️ Clear All
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Main content area -->
+        <div class="sidebar-content stack-lg">
+          <!-- Current List Panel -->
+          <section class="panel">
+            <div class="panel-header flex items-center justify-between">
+              <h2 class="panel-title">
+                <span id="current-list-name">Select a Class List</span>
+              </h2>
+              <select id="list-selector" class="dropdown" style="max-width: 200px;">
+                <option value="">Select a list...</option>
+              </select>
+            </div>
+
+            <!-- Group Generation Controls -->
+            <div id="group-controls" class="hidden">
+              <div class="stack">
+                <!-- Generate Button and Emoji Toggle -->
+                <div class="flex items-center justify-between gap-md">
+                  <button id="generate-btn" class="btn btn-lg btn-primary">
+                    🔄 Generate Groups
+                  </button>
+                  <label class="checkbox">
+                    <input type="checkbox" id="emoji-toggle" checked>
+                    <span>Use emoji names</span>
+                  </label>
+                </div>
+
+                <!-- Group Size Slider -->
+                <div>
+                  <div class="flex items-center justify-between mb-sm">
+                    <label class="font-semibold">Group Size:</label>
+                    <span id="group-size-display" class="text-lg font-bold text-primary">3</span>
+                  </div>
+                  <input
+                    type="range"
+                    id="group-size-slider"
+                    min="1"
+                    max="15"
+                    value="3"
+                    class="w-full"
+                    style="accent-color: var(--lavender);">
+                  <div class="flex justify-between text-xs text-secondary mt-xs">
+                    <span>1</span>
+                    <span>15</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Students Panel -->
+          <section id="student-panel" class="panel hidden">
+            <h2 class="panel-title mb-md">Students</h2>
+            <div class="stack">
+              <div class="flex gap-sm">
+                <input
+                  type="text"
+                  id="student-input"
+                  class="input"
+                  placeholder="Enter student name (or multiple, comma-separated)"
+                  autocomplete="off">
+                <button id="add-student-btn" class="btn btn-primary">
+                  ➕ Add
+                </button>
+              </div>
+              <div id="student-list" class="grid grid-2 gap-sm"></div>
+              <button id="remove-student-btn" class="btn btn-sm btn-danger w-full">
+                ➖ Remove Selected
+              </button>
+            </div>
+          </section>
+
+          <!-- Incompatible Pairs Panel -->
+          <section id="rules-panel" class="panel hidden">
+            <div id="rules-header" class="panel-header flex items-center justify-between cursor-pointer">
+              <div class="flex items-center gap-sm">
+                <h2 class="panel-title">Pairing Rules</h2>
+                <span id="rules-count" class="badge">0 rules</span>
+              </div>
+              <span id="rules-toggle" class="text-secondary">▼</span>
+            </div>
+
+            <div id="rules-content" class="hidden">
+              <div class="stack">
+                <div id="incompatible-list" class="stack-sm mb-md" style="max-height: 200px; overflow-y: auto;">
+                  <!-- Incompatible pairs will be listed here -->
+                </div>
+
+                <label class="font-semibold text-sm mb-xs">Add New Rule:</label>
+                <select id="student-selector" class="dropdown">
+                  <option value="">Select students to keep apart...</option>
+                </select>
+
+                <div id="selected-students" class="flex flex-wrap gap-sm mb-sm">
+                  <!-- Selected students for new rule -->
+                </div>
+
+                <div class="flex gap-sm">
+                  <button id="add-rule-btn" class="btn btn-primary w-full">
+                    ➕ Add Rule
+                  </button>
+                  <button id="remove-rule-btn" class="btn btn-danger w-full">
+                    ➖ Remove Selected
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Generated Groups Panel -->
+          <section id="groups-panel" class="panel hidden">
+            <h2 class="panel-title mb-md">Generated Groups</h2>
+            <div id="groups-preview" class="grid grid-3 gap-md"></div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Student View -->
+  <div id="student-view" class="view">
+    <!-- Confetti container -->
+    <div id="confetti-container" class="confetti-container"></div>
+
+    <!-- Header -->
+    <header class="student-header">
+      <div class="container">
+        <h1 class="text-3xl font-bold">
+          <span id="class-name">Class Groups</span>
+        </h1>
+        <button id="switch-to-teacher-btn" class="btn btn-sm btn-primary">
+          👨‍🏫 Teacher View
+        </button>
+      </div>
+    </header>
+
+    <!-- Main content -->
+    <main class="student-main">
+      <div id="groups-container" class="groups-container">
+        <!-- Groups will be displayed here -->
+      </div>
+
+      <!-- Empty state -->
+      <div id="empty-state" class="empty-state hidden">
+        <div class="empty-state-icon">📝</div>
+        <p class="empty-state-text">No groups have been generated yet</p>
+        <p class="text-secondary">Please generate groups first</p>
+      </div>
     </main>
+  </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            // Function to load tool content
-            function loadToolContent(toolName) {
-                const contentContainer = document.getElementById('tool-content-container');
-                contentContainer.innerHTML = '<div class="loading-indicator">Loading ' + toolName + '...</div>';
+  <!-- Modals -->
+  <!-- List Modal -->
+  <div id="list-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" id="list-modal-close">&times;</span>
+      <h3 class="modal-title" id="list-modal-title">Create New Class List</h3>
+      <div class="stack">
+        <input
+          type="text"
+          id="list-name-input"
+          class="input"
+          placeholder="Enter list name"
+          autocomplete="off">
+        <div class="modal-actions">
+          <button id="cancel-list-btn" class="btn btn-secondary">Cancel</button>
+          <button id="save-list-btn" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-                // Create iframe but with better styling to avoid double scrollbar issues
-                const iframe = document.createElement('iframe');
-                iframe.src = toolName + '.html';
-                iframe.title = toolName + ' Tool';
-                iframe.style.width = '100%';
-                iframe.style.height = '100%';
-                iframe.style.border = 'none';
-                iframe.style.display = 'block';
-                iframe.style.maxWidth = '100vw';
-                iframe.style.padding = '0';
-                iframe.style.margin = '0';
+  <!-- Hidden file input for import -->
+  <input type="file" id="import-file-input" accept=".json" style="display: none;">
 
-                // Add mobile-specific class for styling
-                if (window.innerWidth <= 768) {
-                    iframe.classList.add('mobile-iframe');
-                }
+  <!-- Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/groups.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/teacher.js"></script>
+  <script src="js/student.js"></script>
+  <script>
+    // View switching logic
+    const teacherView = document.getElementById('teacher-view');
+    const studentView = document.getElementById('student-view');
+    const switchToStudentBtn = document.getElementById('switch-to-student-btn');
+    const switchToTeacherBtn = document.getElementById('switch-to-teacher-btn');
 
-                // Clear the container and add the iframe
-                contentContainer.innerHTML = '';
-                contentContainer.appendChild(iframe);
+    function showStudentView() {
+      teacherView.classList.remove('active');
+      studentView.classList.add('active');
+      document.body.classList.add('student-mode');
 
-                // Add load event to handle iframe loading
-                iframe.onload = function() {
-                    // Add a class to the iframe for styling
-                    iframe.classList.add('loaded-iframe');
+      // Reload student view
+      if (window.studentViewInstance) {
+        window.studentViewInstance.loadGroups();
+      }
+    }
 
-                    try {
-                        // Apply responsive styles to the iframe content
-                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+    function showTeacherView() {
+      studentView.classList.remove('active');
+      teacherView.classList.add('active');
+      document.body.classList.remove('student-mode');
+    }
 
-                        // Add responsive viewport meta tag if not present
-                        if (!iframeDoc.querySelector('meta[name="viewport"]')) {
-                            const meta = document.createElement('meta');
-                            meta.name = 'viewport';
-                            meta.content = 'width=device-width, initial-scale=1.0';
-                            iframeDoc.head.appendChild(meta);
-                        }
+    switchToStudentBtn.addEventListener('click', showStudentView);
+    switchToTeacherBtn.addEventListener('click', showTeacherView);
 
-                        // Add our responsive CSS to the iframe
-                        const linkExists = iframeDoc.querySelector('link[href="css/responsive.css"]');
-                        if (!linkExists) {
-                            const link = document.createElement('link');
-                            link.rel = 'stylesheet';
-                            link.href = 'css/responsive.css';
-                            iframeDoc.head.appendChild(link);
-                        }
-
-                        // Add responsive.js to the iframe
-                        const scriptExists = iframeDoc.querySelector('script[src="js/responsive.js"]');
-                        if (!scriptExists) {
-                            const script = document.createElement('script');
-                            script.src = 'js/responsive.js';
-                            iframeDoc.body.appendChild(script);
-                        }
-
-                        // Add body styles to prevent double scrolling
-                        iframeDoc.body.style.width = '100%';
-                        iframeDoc.body.style.margin = '0';
-                        iframeDoc.body.style.padding = '0';
-                        iframeDoc.body.style.overflowX = 'hidden';
-                    } catch (e) {
-                        console.log('Note: Cannot modify iframe content due to same-origin policy. This is expected when viewing locally.');
-                    }
-                };
-
-                // Add error handling
-                iframe.onerror = function() {
-                    contentContainer.innerHTML = '<div class="error-message">Error loading content</div>';
-                };
-            }
-
-            // Load the initial content (GroupThing)
-            loadToolContent('groupthing');
-
-            // Mark as visited to prevent any future welcome banners
-            localStorage.setItem('visited', 'true');
-            document.body.classList.add('visited');
-        });
-    </script>
+    // Store student view instance for reload
+    document.addEventListener('DOMContentLoaded', () => {
+      // Teacher app is initialized automatically
+      // Store student view instance for switching
+      setTimeout(() => {
+        if (window.studentViewInstance) {
+          console.log('Student view instance ready');
+        }
+      }, 100);
+    });
+  </script>
 </body>
 </html>
