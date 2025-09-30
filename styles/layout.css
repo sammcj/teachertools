@@ -161,16 +161,17 @@ h1, h2, h3, h4, h5, h6 {
 /* App container with sidebar */
 .app-container {
   display: flex;
-  gap: var(--space-lg);
-  max-width: var(--container-xl);
-  margin: 0 auto;
-  padding: var(--space-lg);
+  gap: var(--space-md);
+  max-width: none;
+  margin: 0;
+  padding: var(--space-md) var(--space-lg);
   flex: 1;
+  width: 100%;
 }
 
 .app-sidebar {
-  flex: 0 0 280px;
-  min-width: 280px;
+  flex: 0 0 240px;
+  min-width: 240px;
 }
 
 .sidebar-inner {

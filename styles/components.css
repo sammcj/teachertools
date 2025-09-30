@@ -87,6 +87,15 @@
   transform: translateY(-2px);
 }
 
+/* Compact group cards */
+.group-card {
+  padding: var(--space-sm) var(--space-md);
+}
+
+.group-card:hover {
+  transform: translateY(-1px);
+}
+
 .card-header {
   margin-bottom: var(--space-md);
 }

@@ -50,6 +50,7 @@ class TeacherApp {
     this.rulesHeader = document.getElementById('rules-header');
     this.rulesContent = document.getElementById('rules-content');
     this.rulesToggle = document.getElementById('rules-toggle');
+    this.rulesCount = document.getElementById('rules-count');
     this.incompatibleList = document.getElementById('incompatible-list');
     this.studentSelector = document.getElementById('student-selector');
     this.selectedStudentsContainer = document.getElementById('selected-students');
@@ -582,15 +583,15 @@ class TeacherApp {
 
     groups.forEach((group, index) => {
       const card = document.createElement('div');
-      card.className = 'card animate__animated animate__bounceIn';
+      card.className = 'card group-card animate__animated animate__bounceIn';
       card.style.animationDelay = `${index * 0.1}s`;
 
       const groupName = Groups.getGroupName(index, useEmoji);
 
       card.innerHTML = `
-        <h4 class="text-lg font-semibold mb-sm text-primary">${groupName}</h4>
-        <ul class="stack-sm">
-          ${group.map(student => `<li class="text-base">${student}</li>`).join('')}
+        <h4 class="text-base font-semibold mb-xs text-primary">${groupName}</h4>
+        <ul class="stack-xs">
+          ${group.map(student => `<li class="text-sm">${student}</li>`).join('')}
         </ul>
       `;
 
@@ -769,6 +770,10 @@ class TeacherApp {
     if (!rules) {
       rules = [];
     }
+
+    // Update rules count badge
+    const count = rules.length;
+    this.rulesCount.textContent = `${count} rule${count !== 1 ? 's' : ''}`;
 
     if (rules.length === 0) {
       this.incompatibleList.innerHTML = '<div class="empty-state"><p class="text-sm">No rules yet</p></div>';
