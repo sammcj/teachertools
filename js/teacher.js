@@ -727,6 +727,40 @@ class TeacherApp {
     this.loadIncompatiblePairs(list.pairingRules);
   }
 
+  editRule(index, rule, ruleType) {
+    const list = Storage.getList(this.currentListId);
+    if (!list) return;
+
+    // Get students from rule (handle both old and new formats)
+    let students;
+    if (Array.isArray(rule)) {
+      students = rule;
+    } else {
+      students = rule.students;
+    }
+
+    // Populate the selected students for editing
+    this.selectedIncompatible = [...students];
+    this.renderSelectedStudents();
+
+    // Set the rule type radio button
+    if (ruleType === 'always') {
+      this.ruleTypeAlways.checked = true;
+    } else {
+      this.ruleTypeNever.checked = true;
+    }
+
+    // Remove the old rule
+    list.pairingRules.splice(index, 1);
+    Storage.updateList(this.currentListId, { pairingRules: list.pairingRules });
+    this.loadIncompatiblePairs(list.pairingRules);
+
+    // Scroll to the rule input area and update the rules count
+    this.rulesContent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    Utils.showToast('Rule loaded for editing - modify and click "Add Rule" to save', 'info');
+  }
+
   loadIncompatiblePairs(rules) {
     this.incompatibleList.innerHTML = '';
     this.selectedRulesForRemoval = [];
@@ -747,35 +781,55 @@ class TeacherApp {
       div.dataset.ruleIndex = index;
 
       // Handle old format (simple array) vs new format (object with type)
-      let icon, label, students;
+      let icon, label, students, ruleType;
       if (Array.isArray(rule)) {
         // Old format: ['Student1', 'Student2']
         icon = '❌';
         label = 'Never';
         students = rule.join(' & ');
+        ruleType = 'never';
       } else {
         // New format: { type: 'never'/'always', students: [...] }
         icon = rule.type === 'never' ? '❌' : '✅';
         label = rule.type === 'never' ? 'Never' : 'Always';
         students = rule.students.join(', ');
+        ruleType = rule.type;
       }
 
       div.innerHTML = `
-        <div class="flex items-center gap-xs">
-          <span style="font-size: 1.1em;">${icon}</span>
-          <span class="font-semibold text-xs">${label}:</span>
-          <span class="text-sm">${students}</span>
+        <div class="flex items-center justify-between gap-sm">
+          <div class="flex items-center gap-xs flex-1">
+            <span style="font-size: 1.1em;">${icon}</span>
+            <span class="font-semibold text-xs">${label}:</span>
+            <span class="text-sm">${students}</span>
+          </div>
+          <button class="btn btn-xs btn-secondary edit-rule-btn" data-rule-index="${index}" title="Edit rule">
+            ✏️
+          </button>
         </div>
       `;
 
-      div.addEventListener('click', () => {
-        div.classList.toggle('bg-lavender');
+      // Click to select for removal
+      div.addEventListener('click', (e) => {
+        // Don't toggle selection if clicking the edit button
+        if (e.target.classList.contains('edit-rule-btn') || e.target.closest('.edit-rule-btn')) {
+          return;
+        }
+
+        div.classList.toggle('student-selected');
         const idx = this.selectedRulesForRemoval.indexOf(index);
         if (idx > -1) {
           this.selectedRulesForRemoval.splice(idx, 1);
         } else {
           this.selectedRulesForRemoval.push(index);
         }
+      });
+
+      // Edit button handler
+      const editBtn = div.querySelector('.edit-rule-btn');
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.editRule(index, rule, ruleType);
       });
 
       this.incompatibleList.appendChild(div);
