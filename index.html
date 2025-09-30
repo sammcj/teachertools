@@ -253,8 +253,30 @@
     </div>
   </div>
 
-  <!-- Hidden file input for import -->
-  <input type="file" id="import-file-input" accept=".json" style="display: none;">
+  <!-- Import Modal -->
+  <div id="import-modal" class="modal">
+    <div class="modal-content">
+      <span class="modal-close" id="import-modal-close">&times;</span>
+      <div class="modal-header">
+        <h2 class="modal-title">Import Settings</h2>
+      </div>
+      <p class="text-sm text-secondary mb-md">
+        Select a backup file to import your class lists and settings.
+      </p>
+      <div class="stack-sm">
+        <input
+          type="file"
+          id="import-file-input"
+          accept=".json"
+          class="input">
+        <div id="import-error" class="text-error text-sm hidden"></div>
+      </div>
+      <div class="modal-actions">
+        <button id="confirm-import-btn" class="btn btn-primary">📥 Import</button>
+        <button id="cancel-import-btn" class="btn btn-secondary">❌ Cancel</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Scripts -->
   <script src="js/storage.js"></script>
