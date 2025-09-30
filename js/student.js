@@ -79,9 +79,17 @@ class StudentView {
 
   displayGroups(groups, name = 'Class Groups', useEmoji = true) {
     this.className.textContent = name;
-    this.emptyState.classList.add('hidden');
-    this.groupsContainer.classList.remove('hidden');
-    this.groupsContainer.innerHTML = '';
+
+    // Hide empty state and show groups
+    if (this.emptyState) {
+      this.emptyState.classList.add('hidden');
+      this.emptyState.style.display = 'none';
+    }
+    if (this.groupsContainer) {
+      this.groupsContainer.classList.remove('hidden');
+      this.groupsContainer.style.display = 'flex';
+      this.groupsContainer.innerHTML = '';
+    }
 
     // Check if we need rectangular layout
     const hasLargeGroups = groups.some(g => g.length > 6);
