@@ -56,9 +56,16 @@
 		border: 1px solid #d4d4d4;
 		border-radius: 0 0 0.375rem 0.375rem;
 		flex: 1 1 0;
-		min-width: 2rem;
-		height: 10rem;
+		min-width: 1.5rem;
+		height: 8.5rem;
 		z-index: 1;
+	}
+
+	@media (min-width: 640px) {
+		.white {
+			min-width: 2rem;
+			height: 12rem;
+		}
 	}
 
 	.white:not(.active):not([style*="--key-colour"]) {
@@ -78,11 +85,18 @@
 		background: var(--key-colour, #1a1a1a);
 		border: 1px solid #000;
 		border-radius: 0 0 0.25rem 0.25rem;
-		width: 1.75rem;
-		height: 6.5rem;
+		width: 1.25rem;
+		height: 5.5rem;
 		position: absolute;
 		z-index: 2;
 		color: white;
+	}
+
+	@media (min-width: 640px) {
+		.black {
+			width: 1.75rem;
+			height: 8rem;
+		}
 	}
 
 	.black:not(.active):not([style*="--key-colour"]) {
@@ -103,10 +117,16 @@
 	}
 
 	.key-label {
-		font-size: 0.7rem;
+		font-size: 0.55rem;
 		font-weight: 600;
 		pointer-events: none;
 		line-height: 1;
+	}
+
+	@media (min-width: 640px) {
+		.key-label {
+			font-size: 0.7rem;
+		}
 	}
 
 	.white .key-label {

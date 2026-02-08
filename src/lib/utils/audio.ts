@@ -1,14 +1,30 @@
 import type { NoteHandle, Waveform } from '$lib/types/piano';
 
 let audioCtx: AudioContext | null = null;
+let audioUnlocked = false;
 
-/** Lazily create AudioContext on first user interaction (handles iOS Safari autoplay policy) */
+/**
+ * Lazily create AudioContext on first user interaction.
+ * iOS Safari requires creation + resume during a user gesture.
+ * Uses webkitAudioContext fallback for older Safari versions.
+ */
 export function ensureAudioContext(): AudioContext {
 	if (!audioCtx) {
-		audioCtx = new AudioContext();
+		const CtxClass = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+		audioCtx = new CtxClass();
 	}
+	// iOS Safari suspends the context between user gestures -- resume every time
 	if (audioCtx.state === 'suspended') {
-		audioCtx.resume();
+		void audioCtx.resume();
+	}
+	// Play a silent buffer on first interaction to unlock iOS audio
+	if (!audioUnlocked && audioCtx.state === 'running') {
+		const buf = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+		const src = audioCtx.createBufferSource();
+		src.buffer = buf;
+		src.connect(audioCtx.destination);
+		src.start(0);
+		audioUnlocked = true;
 	}
 	return audioCtx;
 }

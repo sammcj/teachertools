@@ -79,7 +79,8 @@
 		const whiteCount = whiteNotes.length;
 		const pct = ((whiteIndex + 1) / whiteCount) * 100;
 		// Centre the black key on the boundary between white keys
-		return `calc(${pct}% - 0.875rem)`;
+		// Uses var(--black-key-offset) which is half the black key width
+		return `calc(${pct}% - var(--black-key-offset))`;
 	}
 </script>
 
@@ -127,6 +128,13 @@
 		touch-action: none;
 		user-select: none;
 		-webkit-user-select: none;
+		--black-key-offset: 0.625rem;
+	}
+
+	@media (min-width: 640px) {
+		.keyboard-container {
+			--black-key-offset: 0.875rem;
+		}
 	}
 
 	.black-key-wrapper {

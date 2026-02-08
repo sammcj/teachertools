@@ -271,7 +271,7 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="composer-staff-container" class:cursor-pointer={hoveringExistingNote}>
 	<svg
-		viewBox="0 0 {minWidth} 160"
+		viewBox="0 0 {minWidth} 140"
 		class="composer-staff-svg"
 		role="application"
 		aria-label="Composer staff - click to place notes"

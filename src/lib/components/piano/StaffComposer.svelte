@@ -231,15 +231,15 @@
 	.composer-wrapper {
 		display: flex;
 		flex-direction: column;
-		gap: 0.5rem;
+		gap: 0.25rem;
 	}
 
 	.composer-toolbar {
 		display: flex;
 		align-items: center;
-		gap: 0.5rem;
+		gap: 0.375rem;
 		flex-wrap: wrap;
-		padding: 0.375rem 0;
+		padding: 0.25rem 0;
 	}
 
 	.toolbar-group {

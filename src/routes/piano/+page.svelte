@@ -104,8 +104,9 @@
 	<title>Piano - Teacher Tools</title>
 </svelte:head>
 
-<div class="mx-auto flex flex-col gap-4 p-4" style="max-width: 90vw; min-height: 90vh;">
-	<div class="rounded-xl border border-border bg-surface p-4">
+<div class="piano-page mx-auto flex flex-col gap-2 p-2 sm:gap-4 sm:p-4">
+
+	<div class="rounded-xl border border-border bg-surface p-2 sm:p-4">
 		<StaffComposer
 			waveform={settings.waveform}
 			showColours={settings.showColours}
@@ -114,7 +115,7 @@
 		/>
 	</div>
 
-	<div class="rounded-xl border border-border bg-surface p-4">
+	<div class="rounded-xl border border-border bg-surface p-2 sm:p-4">
 		<PianoKeyboard
 			{notes}
 			{activeNotes}
@@ -129,3 +130,16 @@
 
 	<SettingsPanel {settings} onchange={handleSettingsChange} />
 </div>
+
+<style>
+	.piano-page {
+		max-width: 96vw;
+		min-height: 90vh;
+	}
+
+	@media (min-width: 640px) {
+		.piano-page {
+			max-width: 85vw;
+		}
+	}
+</style>
