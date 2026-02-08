@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { base } from '$app/paths';
 	import Button from '$lib/components/shared/Button.svelte';
 	import {
 		getCurrentListId,
@@ -8,6 +9,7 @@
 		addToast
 	} from '$lib/stores/storage.svelte';
 	import { generateGroups } from '$lib/utils/grouping';
+	import { buildStudentViewUrl } from '$lib/utils/url';
 	import { Shuffle } from 'lucide-svelte';
 
 	let currentListId = $derived(getCurrentListId());
@@ -30,7 +32,18 @@
 			currentList.blacklist
 		);
 		saveGroups(currentListId, groups);
-		addToast('Groups generated!', 'success');
+
+		const studentUrl = buildStudentViewUrl(
+			base,
+			currentListId,
+			currentList.name,
+			groups,
+			currentList.useEmojiNames
+		);
+		addToast('Groups generated!', 'success', {
+			linkText: 'Open Student View',
+			linkHref: studentUrl
+		});
 	}
 
 	function handleToggleEmoji() {

@@ -28,4 +28,6 @@ export interface ToastMessage {
 	id: string;
 	message: string;
 	type: 'info' | 'error' | 'success';
+	linkText?: string;
+	linkHref?: string;
 }

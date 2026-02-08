@@ -52,10 +52,14 @@ function persist(): void {
 
 // --- Toast notifications ---
 
-export function addToast(message: string, type: ToastMessage['type'] = 'info'): void {
+export function addToast(
+	message: string,
+	type: ToastMessage['type'] = 'info',
+	options?: { linkText?: string; linkHref?: string }
+): void {
 	const id = crypto.randomUUID();
-	toasts.push({ id, message, type });
-	setTimeout(() => removeToast(id), 3500);
+	toasts.push({ id, message, type, ...options });
+	setTimeout(() => removeToast(id), options?.linkHref ? 6000 : 3500);
 }
 
 export function removeToast(id: string): void {

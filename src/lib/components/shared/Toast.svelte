@@ -13,7 +13,12 @@
 					{toast.type === 'error' ? 'bg-danger' : toast.type === 'success' ? 'bg-success' : 'bg-brand'}"
 				role="alert"
 			>
-				<span>{toast.message}</span>
+				<span>
+					{toast.message}
+					{#if toast.linkHref}
+						<a href={toast.linkHref} class="ml-1 underline underline-offset-2 hover:no-underline">{toast.linkText ?? 'Open'}</a>
+					{/if}
+				</span>
 				<button onclick={() => removeToast(toast.id)} class="ml-2 opacity-70 hover:opacity-100">
 					<X size={14} />
 				</button>
