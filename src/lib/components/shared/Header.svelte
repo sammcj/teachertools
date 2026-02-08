@@ -3,10 +3,16 @@
 	import { page } from '$app/stores';
 
 	const tabs = [
-		{ label: 'GroupThing', href: `${base}/teacher` },
+		{ label: 'GroupThing', href: `${base}/teacher`, matchPaths: [`${base}/teacher`, `${base}/student`] },
+		{ label: 'Piano', href: `${base}/piano`, matchPaths: [`${base}/piano`] },
 		{ label: 'Quiz Maker', href: '', disabled: true },
 		{ label: 'Classroom Timer', href: '', disabled: true }
 	];
+
+	function isTabActive(tab: typeof tabs[number], path: string): boolean {
+		if (!('matchPaths' in tab) || !tab.matchPaths) return false;
+		return tab.matchPaths.some((p: string) => path.startsWith(p));
+	}
 
 	let currentPath = $derived($page.url.pathname);
 </script>
@@ -29,7 +35,7 @@
 				{:else}
 					<a
 						href={tab.href}
-						class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {currentPath.includes('/teacher') || currentPath.includes('/student')
+						class="rounded-lg px-3 py-1.5 text-sm font-medium transition-colors {isTabActive(tab, currentPath)
 							? 'bg-brand text-white'
 							: 'text-text-secondary hover:bg-surface-secondary'}"
 					>

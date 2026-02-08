@@ -2,7 +2,7 @@
 
 @font-face {
 	font-family: 'Montserrat';
-	src: url('../static/fonts/montserrat-bold.woff2') format('woff2');
+	src: url('/fonts/montserrat-bold.woff2') format('woff2');
 	font-weight: 700;
 	font-style: normal;
 	font-display: swap;
@@ -10,7 +10,7 @@
 
 @font-face {
 	font-family: 'Quicksand';
-	src: url('../static/fonts/quicksand-medium.woff2') format('woff2');
+	src: url('/fonts/quicksand-medium.woff2') format('woff2');
 	font-weight: 500;
 	font-style: normal;
 	font-display: swap;
@@ -52,6 +52,15 @@
 	--color-group-6: #4ade80;
 	--color-group-7: #fb923c;
 	--color-group-8: #38bdf8;
+
+	/* Piano note colours (Boomwhacker-inspired) */
+	--color-note-c: #E53935;
+	--color-note-d: #FB8C00;
+	--color-note-e: #FDD835;
+	--color-note-f: #43A047;
+	--color-note-g: #1E88E5;
+	--color-note-a: #5E35B1;
+	--color-note-b: #D81B60;
 }
 
 html {
