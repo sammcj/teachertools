@@ -34,7 +34,7 @@
 	import DurationPicker from './DurationPicker.svelte';
 	import PlaybackControls from './PlaybackControls.svelte';
 	import Button from '$lib/components/shared/Button.svelte';
-	import { Trash2, Volume2, VolumeX, Type } from 'lucide-svelte';
+	import { Trash2, Volume2, VolumeX, Type, Music } from 'lucide-svelte';
 
 	interface Props {
 		waveform: Waveform;
@@ -53,6 +53,7 @@
 
 	let selectedNoteIds = $state<Set<string>>(new Set());
 	let isPlaying = $state(false);
+	let looping = $state(false);
 	let currentPlaybackIndex = $state(-1);
 	let abortPlayback: (() => void) | null = null;
 
@@ -155,6 +156,11 @@
 	function setNotesPerLine(count: number) {
 		composerSettings = { ...composerSettings, notesPerLine: count };
 		persistSettings();
+		// Truncate excess notes when reducing the limit
+		if (count > 0 && composedNotes.length > count) {
+			updateCurrentModeNotes(composedNotes.slice(0, count));
+			selectedNoteIds = new Set();
+		}
 	}
 
 	function togglePlayOnPlace() {
@@ -167,12 +173,22 @@
 		persistSettings();
 	}
 
+	function toggleSolfa() {
+		composerSettings = { ...composerSettings, useSolfa: !composerSettings.useSolfa };
+		persistSettings();
+	}
+
 	function setBpm(bpm: number) {
 		composerSettings = { ...composerSettings, bpm };
 		persistSettings();
 	}
 
 	function handleNotePlace(resolved: ResolvedPitch) {
+		// In fixed mode, don't allow more notes than the limit
+		if (composerSettings.notesPerLine > 0 && composedNotes.length >= composerSettings.notesPerLine) {
+			return;
+		}
+
 		const note: ComposedNote = {
 			id: crypto.randomUUID(),
 			staffPosition: resolved.staffPosition,
@@ -228,9 +244,7 @@
 		selectedNoteIds = new Set();
 	}
 
-	function handlePlay() {
-		if (composedNotes.length === 0 || isPlaying) return;
-		isPlaying = true;
+	function startPlayback() {
 		ensureAudioContext();
 		abortPlayback = playSequence(
 			composedNotes,
@@ -238,11 +252,21 @@
 			waveform,
 			(index) => { currentPlaybackIndex = index; },
 			() => {
-				isPlaying = false;
-				currentPlaybackIndex = -1;
 				abortPlayback = null;
+				if (looping && composedNotes.length > 0) {
+					startPlayback();
+				} else {
+					isPlaying = false;
+					currentPlaybackIndex = -1;
+				}
 			}
 		);
+	}
+
+	function handlePlay() {
+		if (composedNotes.length === 0 || isPlaying) return;
+		isPlaying = true;
+		startPlayback();
 	}
 
 	function handleStop() {
@@ -252,6 +276,10 @@
 		}
 		isPlaying = false;
 		currentPlaybackIndex = -1;
+	}
+
+	function toggleLoop() {
+		looping = !looping;
 	}
 
 	function changeSelectedPitch(direction: 1 | -1) {
@@ -468,6 +496,17 @@
 			<Type size={14} />
 		</button>
 
+		<!-- Solfa toggle (Do Re Mi) -->
+		<button
+			class="icon-btn"
+			class:active={composerSettings.useSolfa}
+			aria-label={composerSettings.useSolfa ? 'Solfa: on' : 'Solfa: off'}
+			title={composerSettings.useSolfa ? 'Solfa (Do Re Mi): on' : 'Solfa (Do Re Mi): off'}
+			onclick={toggleSolfa}
+		>
+			<Music size={14} />
+		</button>
+
 		<div class="toolbar-separator"></div>
 
 		<!-- Duration picker -->
@@ -492,10 +531,12 @@
 		<!-- Playback controls -->
 		<PlaybackControls
 			{isPlaying}
+			{looping}
 			noteCount={composedNotes.length}
 			bpm={composerSettings.bpm}
 			onplay={handlePlay}
 			onstop={handleStop}
+			onlooptoggle={toggleLoop}
 			onbpmchange={setBpm}
 		/>
 
@@ -535,6 +576,7 @@
 		{currentPlaybackIndex}
 		{showColours}
 		showNoteLabels={composerSettings.showNoteLabels}
+		useSolfa={composerSettings.useSolfa}
 		rootNote={composerSettings.rootNote}
 		{currentThreeLineNotes}
 		currentOneLineNotes={effectiveOneLineNotes}

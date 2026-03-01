@@ -9,7 +9,8 @@
 		resolveFullStavePitch,
 		resolveThreeLinePitch,
 		resolveOneLinePitch,
-		keySignaturePositions
+		keySignaturePositions,
+		noteNameToSolfa
 	} from '$lib/utils/composer-data';
 
 	interface Props {
@@ -21,6 +22,7 @@
 		currentPlaybackIndex: number;
 		showColours: boolean;
 		showNoteLabels: boolean;
+		useSolfa: boolean;
 		rootNote: ComposerKey;
 		currentThreeLineNotes: Record<PitchZone, ResolvedNote>;
 		currentOneLineNotes: Record<'low' | 'high', ResolvedNote>;
@@ -37,6 +39,7 @@
 		currentPlaybackIndex,
 		showColours,
 		showNoteLabels,
+		useSolfa,
 		rootNote,
 		currentThreeLineNotes,
 		currentOneLineNotes,
@@ -67,14 +70,9 @@
 			: UNLIMITED_SLOT_WIDTH
 	);
 
-	// ViewBox width: fixed for fixed mode, grows for unlimited
+	// ViewBox width: always VIEW_BASE_WIDTH for fixed mode, grows for unlimited
 	let viewBoxWidth = $derived.by(() => {
 		if (notesPerLine > 0) {
-			// Fixed: base width covers notesPerLine slots; extend only if overflow
-			const slotsNeeded = Math.max(notesPerLine, notes.length + 1);
-			if (slotsNeeded > notesPerLine) {
-				return startX + slotsNeeded * slotWidth + RIGHT_PAD;
-			}
 			return VIEW_BASE_WIDTH;
 		}
 		// Unlimited: grow with notes, minimum shows at least 6 slots
@@ -84,10 +82,10 @@
 
 	let staffLineEnd = $derived(viewBoxWidth);
 
-	// SVG style: when viewBox exceeds base width, scale the element proportionally
-	// so the stave height stays constant (no vertical shrinking)
+	// SVG style: unlimited mode scales proportionally when viewBox exceeds base width
+	// Fixed mode never scales beyond 100% - the stave always fits the container
 	let svgWidthStyle = $derived(
-		viewBoxWidth > VIEW_BASE_WIDTH
+		notesPerLine === 0 && viewBoxWidth > VIEW_BASE_WIDTH
 			? `width: ${(viewBoxWidth / VIEW_BASE_WIDTH) * 100}%`
 			: ''
 	);
@@ -109,18 +107,22 @@
 		low: currentOneLineNotes.low.noteName
 	});
 
-	// Beam groups: consecutive eighth notes (2+ in a row) that share a beam bar
+	// Beam groups: consecutive eighth notes joined in pairs (groups of 2).
+	// A run of 4 consecutive eighths becomes two beam groups; a run of 3 becomes one pair + one unbeamed.
 	let beamGroups = $derived.by(() => {
 		const groups: { start: number; end: number }[] = [];
 		let i = 0;
 		while (i < notes.length) {
 			if (notes[i].duration === 'eighth') {
-				const start = i;
+				// Find the full run of consecutive eighths
+				const runStart = i;
 				while (i + 1 < notes.length && notes[i + 1].duration === 'eighth') {
 					i++;
 				}
-				if (i > start) {
-					groups.push({ start, end: i });
+				const runEnd = i;
+				// Split the run into pairs
+				for (let j = runStart; j + 1 <= runEnd; j += 2) {
+					groups.push({ start: j, end: j + 1 });
 				}
 			}
 			i++;
@@ -138,6 +140,11 @@
 		}
 		return set;
 	});
+
+	/** Display label for a note name - converts to solfa if enabled */
+	function displayLabel(noteName: string): string {
+		return useSolfa ? noteNameToSolfa(noteName, rootNote) : noteName;
+	}
 
 	function noteX(index: number): number {
 		return startX + index * slotWidth + slotWidth / 2;
@@ -230,6 +237,9 @@
 	let hoverPreview = $state<ResolvedPitch | null>(null);
 	let hoveringExistingNote = $state(false);
 	let hoveredNoteIndex = $state(-1);
+
+	// Whether the stave is full (no more notes can be placed)
+	let isFull = $derived(notesPerLine > 0 && notes.length >= notesPerLine);
 
 	// X position where the next placed note will land
 	let nextNoteX = $derived(
@@ -352,7 +362,7 @@
 			<!-- Three labelled lines with dynamic note names -->
 			{#each [{ label: threeLineLabels.high, y: THREE_LINE_Y.high }, { label: threeLineLabels.middle, y: THREE_LINE_Y.middle }, { label: threeLineLabels.low, y: THREE_LINE_Y.low }] as line}
 				{#if showNoteLabels}
-					<text x="10" y={line.y + 4} font-size="10" fill="#9ca3af" font-weight="500">{line.label}</text>
+					<text x="10" y={line.y + 4} font-size="10" fill="#9ca3af" font-weight="500">{displayLabel(line.label)}</text>
 				{/if}
 				<line
 					x1="0"
@@ -366,8 +376,8 @@
 		{:else}
 			<!-- Single line with dynamic note names -->
 			{#if showNoteLabels}
-				<text x="10" y={ONE_LINE_Y - 18} font-size="10" fill="#9ca3af" font-weight="500">{oneLineLabels.high}</text>
-				<text x="10" y={ONE_LINE_Y + 24} font-size="10" fill="#9ca3af" font-weight="500">{oneLineLabels.low}</text>
+				<text x="10" y={ONE_LINE_Y - 18} font-size="10" fill="#9ca3af" font-weight="500">{displayLabel(oneLineLabels.high)}</text>
+				<text x="10" y={ONE_LINE_Y + 24} font-size="10" fill="#9ca3af" font-weight="500">{displayLabel(oneLineLabels.low)}</text>
 			{/if}
 			<line
 				x1="0"
@@ -459,7 +469,7 @@
 					font-weight="500"
 					fill={showColours ? fill : '#6b7280'}
 					text-anchor="middle"
-				>{note.noteName}</text>
+				>{displayLabel(note.noteName)}</text>
 			{/if}
 		{/each}
 
@@ -473,7 +483,7 @@
 		{/each}
 
 		<!-- Hover preview ghost note -->
-		{#if hoverPreview && !hoveringExistingNote}
+		{#if hoverPreview && !hoveringExistingNote && !isFull}
 			{@const px = nextNoteX}
 			{@const py = hoverPreviewY}
 			{@const previewColour = showColours ? hoverPreview.colour : '#6b7280'}
@@ -533,7 +543,7 @@
 						font-weight="500"
 						fill={previewColour}
 						text-anchor="middle"
-					>{hoverPreview.noteName}</text>
+					>{displayLabel(hoverPreview.noteName)}</text>
 				{/if}
 			</g>
 

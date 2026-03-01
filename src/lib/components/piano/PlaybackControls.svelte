@@ -1,16 +1,18 @@
 <script lang="ts">
-	import { Play, Square } from 'lucide-svelte';
+	import { Play, Square, Repeat } from 'lucide-svelte';
 
 	interface Props {
 		isPlaying: boolean;
+		looping: boolean;
 		noteCount: number;
 		bpm: number;
 		onplay: () => void;
 		onstop: () => void;
+		onlooptoggle: () => void;
 		onbpmchange: (bpm: number) => void;
 	}
 
-	let { isPlaying, noteCount, bpm, onplay, onstop, onbpmchange }: Props = $props();
+	let { isPlaying, looping, noteCount, bpm, onplay, onstop, onlooptoggle, onbpmchange }: Props = $props();
 
 	function handleBpmInput(e: Event) {
 		const value = Number((e.target as HTMLInputElement).value);
@@ -32,6 +34,16 @@
 		{:else}
 			<Play size={14} />
 		{/if}
+	</button>
+
+	<button
+		class="loop-btn"
+		class:active={looping}
+		aria-label={looping ? 'Loop: on' : 'Loop: off'}
+		title={looping ? 'Loop: on' : 'Loop: off'}
+		onclick={onlooptoggle}
+	>
+		<Repeat size={14} />
 	</button>
 
 	<label class="bpm-control">
@@ -76,6 +88,30 @@
 	.play-btn:disabled {
 		opacity: 0.4;
 		cursor: not-allowed;
+	}
+
+	.loop-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 2rem;
+		height: 2rem;
+		border: 1px solid var(--color-border);
+		border-radius: 0.375rem;
+		background: var(--color-surface);
+		color: var(--color-text-secondary);
+		cursor: pointer;
+		transition: all 0.15s;
+	}
+
+	.loop-btn:hover {
+		background: var(--color-surface-secondary);
+	}
+
+	.loop-btn.active {
+		background: var(--color-brand-light);
+		border-color: var(--color-brand);
+		color: var(--color-brand);
 	}
 
 	.bpm-control {

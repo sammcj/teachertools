@@ -59,5 +59,6 @@ export interface ComposerSettings {
 	chordType: ChordType;
 	interval: IntervalType;
 	showNoteLabels: boolean;
+	useSolfa: boolean;
 	notesPerLine: number;
 }

@@ -12,6 +12,36 @@ import type {
 } from '$lib/types/piano';
 import { buildNotes, NOTE_COLOURS, noteToMidi, midiToFrequency } from '$lib/utils/piano-data';
 
+/** Semitone values for note names */
+const NOTE_SEMITONES: Record<string, number> = {
+	'C': 0, 'C#': 1, 'D': 2, 'D#': 3, 'E': 4, 'F': 5,
+	'F#': 6, 'G': 7, 'G#': 8, 'A': 9, 'A#': 10, 'B': 11
+};
+
+/** Major scale intervals in semitones */
+const MAJOR_SCALE_SEMITONES = [0, 2, 4, 5, 7, 9, 11];
+
+/** Solfege syllables for each scale degree */
+const SOLFEGE = ['Do', 'Re', 'Mi', 'Fa', 'Sol', 'La', 'Ti'];
+
+/** Convert a note name (e.g. "C#", "G") to movable-do solfege for the given key */
+export function noteNameToSolfa(noteName: string, rootNote: ComposerKey): string {
+	const rootSemitone = NOTE_SEMITONES[rootNote] ?? 0;
+	const noteSemitone = NOTE_SEMITONES[noteName] ?? NOTE_SEMITONES[noteName.replace('#', '')] ?? 0;
+	const interval = ((noteSemitone - rootSemitone) + 12) % 12;
+	const scaleIndex = MAJOR_SCALE_SEMITONES.indexOf(interval);
+	if (scaleIndex >= 0) {
+		return SOLFEGE[scaleIndex];
+	}
+	// Accidental: find the scale degree one semitone below and add #
+	const flatInterval = ((interval - 1) + 12) % 12;
+	const flatIndex = MAJOR_SCALE_SEMITONES.indexOf(flatInterval);
+	if (flatIndex >= 0) {
+		return SOLFEGE[flatIndex] + '#';
+	}
+	return noteName;
+}
+
 /** Beats per duration (quarter note = 1 beat) */
 export const DURATION_BEATS: Record<NoteDuration, number> = {
 	whole: 4,
@@ -570,6 +600,7 @@ export const DEFAULT_COMPOSER_SETTINGS: ComposerSettings = {
 	chordType: 'major',
 	interval: 'perfect-5th',
 	showNoteLabels: true,
+	useSolfa: false,
 	notesPerLine: 4
 };
 
