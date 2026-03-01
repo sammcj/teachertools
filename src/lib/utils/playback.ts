@@ -1,4 +1,4 @@
-import type { ComposedNote, Waveform } from '$lib/types/piano';
+import type { ComposedNote, NoteHandle, Waveform } from '$lib/types/piano';
 import { durationMs } from '$lib/utils/composer-data';
 import { startNote, stopNote, ensureAudioContext } from '$lib/utils/audio';
 
@@ -17,9 +17,14 @@ export function playSequence(
 	onComplete: () => void
 ): () => void {
 	let aborted = false;
+	let currentHandle: NoteHandle | null = null;
 
 	const abort = () => {
 		aborted = true;
+		if (currentHandle) {
+			stopNote(currentHandle);
+			currentHandle = null;
+		}
 	};
 
 	(async () => {
@@ -32,16 +37,24 @@ export function playSequence(
 			const note = notes[i];
 			const ms = durationMs(note.duration, bpm);
 
-			// Start the note and schedule its stop after the rhythmic duration
-			const handle = startNote(note.frequency, waveform);
+			currentHandle = startNote(note.frequency, waveform);
 
 			// Wait exactly the rhythmic duration before starting the next note
 			await new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-			// Stop with release envelope (tail overlaps next note naturally)
-			stopNote(handle);
-
 			if (aborted) break;
+
+			// Stop with release envelope (tail overlaps next note naturally)
+			stopNote(currentHandle);
+
+			// After the last note, wait for the release envelope to fade out
+			// so the sound doesn't end abruptly
+			if (i === notes.length - 1) {
+				const releaseMs = currentHandle.releaseTime * 1000 + 50;
+				await new Promise<void>((resolve) => setTimeout(resolve, releaseMs));
+			}
+
+			currentHandle = null;
 		}
 
 		onComplete();

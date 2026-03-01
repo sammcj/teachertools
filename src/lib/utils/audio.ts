@@ -34,7 +34,7 @@ export function ensureAudioContext(): AudioContext {
 const ATTACK = 0.02;
 const DECAY = 0.1;
 const SUSTAIN_LEVEL = 0.2;
-const RELEASE = 0.3;
+const RELEASE = 0.4;
 
 /**
  * Start playing a note. Returns an opaque handle to stop it later.
