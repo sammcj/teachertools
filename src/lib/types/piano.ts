@@ -1,6 +1,6 @@
 export type NoteName = 'C' | 'D' | 'E' | 'F' | 'G' | 'A' | 'B';
 export type Accidental = '' | '#';
-export type Waveform = 'sine' | 'triangle' | 'square';
+export type Waveform = 'piano' | 'sine' | 'triangle' | 'square';
 export type OctaveRange = 1 | 2 | 3;
 export type ScaleHighlight = 'none' | 'c-major' | 'g-major' | 'f-major' | 'a-minor';
 
@@ -28,8 +28,8 @@ export interface PianoSettings {
 }
 
 export interface NoteHandle {
-	oscillator: OscillatorNode;
-	gain: GainNode;
+	stop: () => void;
+	releaseTime: number;
 }
 
 // Staff composer types
@@ -59,5 +59,5 @@ export interface ComposerSettings {
 	chordType: ChordType;
 	interval: IntervalType;
 	showNoteLabels: boolean;
-	beatsPerBar: number;
+	notesPerLine: number;
 }

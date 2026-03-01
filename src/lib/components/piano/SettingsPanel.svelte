@@ -110,6 +110,7 @@
 				<label class="setting-row">
 					<span class="setting-label">Waveform</span>
 					<select class="setting-select" value={settings.waveform} onchange={setWaveform}>
+						<option value="piano">Piano</option>
 						<option value="sine">Sine</option>
 						<option value="triangle">Triangle</option>
 						<option value="square">Square</option>

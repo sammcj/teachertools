@@ -161,7 +161,7 @@ export const DEFAULT_SETTINGS: PianoSettings = {
 	showColours: true,
 	showStaff: true,
 	soundEnabled: true,
-	waveform: 'triangle',
+	waveform: 'piano',
 	octaveRange: 2,
 	highlightScale: 'none'
 };

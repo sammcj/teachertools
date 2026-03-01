@@ -137,12 +137,21 @@
 	}
 
 	function setDuration(duration: NoteDuration) {
+		// If a note is selected, change its duration
+		if (selectedNoteId) {
+			updateCurrentModeNotes(
+				composedNotes.map((n) =>
+					n.id === selectedNoteId ? { ...n, duration } : n
+				)
+			);
+		}
+		// Always update the selected duration for future placements
 		composerSettings = { ...composerSettings, selectedDuration: duration };
 		persistSettings();
 	}
 
-	function setBeatsPerBar(beats: number) {
-		composerSettings = { ...composerSettings, beatsPerBar: beats };
+	function setNotesPerLine(count: number) {
+		composerSettings = { ...composerSettings, notesPerLine: count };
 		persistSettings();
 	}
 
@@ -438,17 +447,18 @@
 		<!-- Duration picker -->
 		<DurationPicker selected={composerSettings.selectedDuration} onselect={setDuration} />
 
-		<!-- Beats per bar -->
+		<!-- Notes per line -->
 		<select
 			class="toolbar-select"
-			value={composerSettings.beatsPerBar}
-			onchange={(e) => setBeatsPerBar(Number(e.currentTarget.value))}
-			aria-label="Beats per bar"
-			title="Beats per bar"
+			value={composerSettings.notesPerLine}
+			onchange={(e) => setNotesPerLine(Number(e.currentTarget.value))}
+			aria-label="Notes per line"
+			title="Notes per line"
 		>
-			{#each [2, 3, 4, 6, 8] as beats}
-				<option value={beats}>{beats}/4</option>
+			{#each [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as count}
+				<option value={count}>{count}</option>
 			{/each}
+			<option value={0}>Unlimited</option>
 		</select>
 
 		<div class="toolbar-separator"></div>
@@ -492,7 +502,7 @@
 		notes={composedNotes}
 		staffMode={composerSettings.staffMode}
 		selectedDuration={composerSettings.selectedDuration}
-		beatsPerBar={composerSettings.beatsPerBar}
+		notesPerLine={composerSettings.notesPerLine}
 		{selectedNoteId}
 		{currentPlaybackIndex}
 		{showColours}

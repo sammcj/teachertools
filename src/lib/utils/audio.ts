@@ -1,4 +1,5 @@
 import type { NoteHandle, Waveform } from '$lib/types/piano';
+import { startPianoNote } from './audio-synth';
 
 let audioCtx: AudioContext | null = null;
 let audioUnlocked = false;
@@ -29,18 +30,23 @@ export function ensureAudioContext(): AudioContext {
 	return audioCtx;
 }
 
-/** ADSR envelope parameters */
+/** Simple oscillator ADSR envelope parameters */
 const ATTACK = 0.02;
 const DECAY = 0.1;
 const SUSTAIN_LEVEL = 0.2;
 const RELEASE = 0.3;
 
 /**
- * Start playing a note. Returns a handle to stop it later.
- * Each call creates a fresh oscillator+gain pair for polyphony.
+ * Start playing a note. Returns an opaque handle to stop it later.
+ * Each call creates fresh audio nodes for polyphony.
  */
 export function startNote(frequency: number, waveform: Waveform): NoteHandle {
 	const ctx = ensureAudioContext();
+
+	if (waveform === 'piano') {
+		return startPianoNote(frequency, ctx);
+	}
+
 	const now = ctx.currentTime;
 
 	const oscillator = ctx.createOscillator();
@@ -49,16 +55,24 @@ export function startNote(frequency: number, waveform: Waveform): NoteHandle {
 
 	const gain = ctx.createGain();
 	gain.gain.setValueAtTime(0, now);
-	// Attack
 	gain.gain.linearRampToValueAtTime(0.5, now + ATTACK);
-	// Decay to sustain
 	gain.gain.linearRampToValueAtTime(SUSTAIN_LEVEL, now + ATTACK + DECAY);
 
 	oscillator.connect(gain);
 	gain.connect(ctx.destination);
 	oscillator.start(now);
 
-	return { oscillator, gain };
+	return {
+		stop: () => {
+			if (!audioCtx) return;
+			const t = audioCtx.currentTime;
+			gain.gain.cancelScheduledValues(t);
+			gain.gain.setValueAtTime(gain.gain.value, t);
+			gain.gain.exponentialRampToValueAtTime(0.001, t + RELEASE);
+			oscillator.stop(t + RELEASE + 0.01);
+		},
+		releaseTime: RELEASE,
+	};
 }
 
 /**
@@ -74,23 +88,12 @@ export function playNoteForDuration(
 	return new Promise((resolve) => {
 		setTimeout(() => {
 			stopNote(handle);
-			// Wait for release envelope to finish before resolving
-			setTimeout(resolve, RELEASE * 1000 + 20);
+			setTimeout(resolve, handle.releaseTime * 1000 + 20);
 		}, durationMs);
 	});
 }
 
 /** Stop a playing note with release envelope */
 export function stopNote(handle: NoteHandle): void {
-	const ctx = audioCtx;
-	if (!ctx) return;
-
-	const now = ctx.currentTime;
-	const { oscillator, gain } = handle;
-
-	// Cancel any scheduled ramps and release
-	gain.gain.cancelScheduledValues(now);
-	gain.gain.setValueAtTime(gain.gain.value, now);
-	gain.gain.exponentialRampToValueAtTime(0.001, now + RELEASE);
-	oscillator.stop(now + RELEASE + 0.01);
+	handle.stop();
 }

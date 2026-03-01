@@ -166,7 +166,7 @@ describe('DEFAULT_SETTINGS', () => {
 		expect(DEFAULT_SETTINGS.showColours).toBe(true);
 		expect(DEFAULT_SETTINGS.showStaff).toBe(true);
 		expect(DEFAULT_SETTINGS.soundEnabled).toBe(true);
-		expect(DEFAULT_SETTINGS.waveform).toBe('triangle');
+		expect(DEFAULT_SETTINGS.waveform).toBe('piano');
 		expect(DEFAULT_SETTINGS.octaveRange).toBe(2);
 		expect(DEFAULT_SETTINGS.highlightScale).toBe('none');
 	});

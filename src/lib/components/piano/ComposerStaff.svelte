@@ -6,7 +6,6 @@
 		STAFF_LINE_POSITIONS,
 		STAFF_GEOMETRY,
 		yForStaffPosition,
-		DURATION_BEATS,
 		resolveFullStavePitch,
 		resolveThreeLinePitch,
 		resolveOneLinePitch,
@@ -17,7 +16,7 @@
 		notes: ComposedNote[];
 		staffMode: StaffMode;
 		selectedDuration: NoteDuration;
-		beatsPerBar: number;
+		notesPerLine: number;
 		selectedNoteId: string | null;
 		currentPlaybackIndex: number;
 		showColours: boolean;
@@ -33,7 +32,7 @@
 		notes,
 		staffMode,
 		selectedDuration,
-		beatsPerBar,
+		notesPerLine,
 		selectedNoteId,
 		currentPlaybackIndex,
 		showColours,
@@ -47,18 +46,6 @@
 
 	const { lineSpacing, bottomLineY, staffLeft } = STAFF_GEOMETRY;
 
-	// Note layout: base width per quarter note
-	const BASE_NOTE_WIDTH = 28;
-
-	// Dynamic viewBox width based on placed notes
-	let totalNotesWidth = $derived.by(() => {
-		let width = 0;
-		for (const note of notes) {
-			width += DURATION_BEATS[note.duration] * BASE_NOTE_WIDTH;
-		}
-		return width;
-	});
-
 	// Key signature positions for sharp symbols
 	let keySigPositions = $derived(keySignaturePositions(rootNote));
 
@@ -67,9 +54,43 @@
 		staffMode === 'full' ? 80 + keySigPositions.length * 10 : 45
 	);
 
-	// Extend the viewBox to fit notes, but the staff lines fill edge-to-edge
-	let minWidth = $derived(Math.max(startX + totalNotesWidth + 40, 400));
-	let staffLineEnd = $derived(minWidth);
+	// Layout: each note gets an equal-width slot.
+	// Fixed mode (1-10): slots sized so N notes fill the stave width exactly.
+	// Unlimited mode (0): fixed slot width, stave grows as notes are added.
+	const VIEW_BASE_WIDTH = 400;
+	const RIGHT_PAD = 20;
+	const UNLIMITED_SLOT_WIDTH = 50;
+
+	let slotWidth = $derived(
+		notesPerLine > 0
+			? (VIEW_BASE_WIDTH - startX - RIGHT_PAD) / notesPerLine
+			: UNLIMITED_SLOT_WIDTH
+	);
+
+	// ViewBox width: fixed for fixed mode, grows for unlimited
+	let viewBoxWidth = $derived.by(() => {
+		if (notesPerLine > 0) {
+			// Fixed: base width covers notesPerLine slots; extend only if overflow
+			const slotsNeeded = Math.max(notesPerLine, notes.length + 1);
+			if (slotsNeeded > notesPerLine) {
+				return startX + slotsNeeded * slotWidth + RIGHT_PAD;
+			}
+			return VIEW_BASE_WIDTH;
+		}
+		// Unlimited: grow with notes, minimum shows at least 6 slots
+		const slotsNeeded = Math.max(6, notes.length + 1);
+		return Math.max(VIEW_BASE_WIDTH, startX + slotsNeeded * UNLIMITED_SLOT_WIDTH + RIGHT_PAD);
+	});
+
+	let staffLineEnd = $derived(viewBoxWidth);
+
+	// SVG style: when viewBox exceeds base width, scale the element proportionally
+	// so the stave height stays constant (no vertical shrinking)
+	let svgWidthStyle = $derived(
+		viewBoxWidth > VIEW_BASE_WIDTH
+			? `width: ${(viewBoxWidth / VIEW_BASE_WIDTH) * 100}%`
+			: ''
+	);
 
 	// Three-line mode geometry
 	const THREE_LINE_Y = { high: 60, middle: 85, low: 110 };
@@ -86,20 +107,6 @@
 	let oneLineLabels = $derived({
 		high: currentOneLineNotes.high.noteName,
 		low: currentOneLineNotes.low.noteName
-	});
-
-	// Barline X positions: vertical lines at fixed beat-grid intervals
-	let barlineXPositions = $derived.by(() => {
-		if (beatsPerBar <= 0 || notes.length === 0) return [];
-		let totalBeats = 0;
-		for (const note of notes) {
-			totalBeats += DURATION_BEATS[note.duration];
-		}
-		const positions: number[] = [];
-		for (let beat = beatsPerBar; beat < totalBeats; beat += beatsPerBar) {
-			positions.push(startX + beat * BASE_NOTE_WIDTH);
-		}
-		return positions;
 	});
 
 	// Beam groups: consecutive eighth notes (2+ in a row) that share a beam bar
@@ -133,11 +140,7 @@
 	});
 
 	function noteX(index: number): number {
-		let x = startX;
-		for (let i = 0; i < index; i++) {
-			x += DURATION_BEATS[notes[i].duration] * BASE_NOTE_WIDTH;
-		}
-		return x + (DURATION_BEATS[notes[index].duration] * BASE_NOTE_WIDTH) / 2;
+		return startX + index * slotWidth + slotWidth / 2;
 	}
 
 	function noteY(note: ComposedNote): number {
@@ -230,7 +233,7 @@
 
 	// X position where the next placed note will land
 	let nextNoteX = $derived(
-		startX + totalNotesWidth + (DURATION_BEATS[selectedDuration] * BASE_NOTE_WIDTH) / 2
+		startX + notes.length * slotWidth + slotWidth / 2
 	);
 
 	// Y position of the hover preview
@@ -307,8 +310,9 @@
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div class="composer-staff-container" class:cursor-pointer={hoveringExistingNote}>
 	<svg
-		viewBox="0 0 {minWidth} 140"
+		viewBox="0 0 {viewBoxWidth} 140"
 		class="composer-staff-svg"
+		style={svgWidthStyle}
 		role="application"
 		aria-label="Composer staff - click to place notes"
 		onclick={handleStaffClick}
@@ -466,18 +470,6 @@
 			{@const x2 = noteX(group.end) + 6}
 			{@const y2 = noteY(notes[group.end]) - 22}
 			<line {x1} {y1} {x2} {y2} stroke="#374151" stroke-width="3" />
-		{/each}
-
-		<!-- Barlines -->
-		{#each barlineXPositions as bx}
-			<line
-				x1={bx}
-				y1={staffMode === 'full' ? yForStaffPosition(STAFF_LINE_POSITIONS[STAFF_LINE_POSITIONS.length - 1]) : staffMode === 'three-line' ? THREE_LINE_Y.high : ONE_LINE_Y - 15}
-				x2={bx}
-				y2={staffMode === 'full' ? yForStaffPosition(STAFF_LINE_POSITIONS[0]) : staffMode === 'three-line' ? THREE_LINE_Y.low : ONE_LINE_Y + 15}
-				stroke="#9ca3af"
-				stroke-width="1.5"
-			/>
 		{/each}
 
 		<!-- Hover preview ghost note -->
