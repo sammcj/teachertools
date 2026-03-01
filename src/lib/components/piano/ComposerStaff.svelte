@@ -301,7 +301,9 @@
 		{:else if staffMode === 'three-line'}
 			<!-- Three labelled lines with dynamic note names -->
 			{#each [{ label: threeLineLabels.high, y: THREE_LINE_Y.high }, { label: threeLineLabels.middle, y: THREE_LINE_Y.middle }, { label: threeLineLabels.low, y: THREE_LINE_Y.low }] as line}
-				<text x="10" y={line.y + 4} font-size="10" fill="#9ca3af" font-weight="500">{line.label}</text>
+				{#if showNoteLabels}
+					<text x="10" y={line.y + 4} font-size="10" fill="#9ca3af" font-weight="500">{line.label}</text>
+				{/if}
 				<line
 					x1="0"
 					y1={line.y}
@@ -313,8 +315,10 @@
 			{/each}
 		{:else}
 			<!-- Single line with dynamic note names -->
-			<text x="10" y={ONE_LINE_Y - 18} font-size="10" fill="#9ca3af" font-weight="500">{oneLineLabels.high}</text>
-			<text x="10" y={ONE_LINE_Y + 24} font-size="10" fill="#9ca3af" font-weight="500">{oneLineLabels.low}</text>
+			{#if showNoteLabels}
+				<text x="10" y={ONE_LINE_Y - 18} font-size="10" fill="#9ca3af" font-weight="500">{oneLineLabels.high}</text>
+				<text x="10" y={ONE_LINE_Y + 24} font-size="10" fill="#9ca3af" font-weight="500">{oneLineLabels.low}</text>
+			{/if}
 			<line
 				x1="0"
 				y1={ONE_LINE_Y}
