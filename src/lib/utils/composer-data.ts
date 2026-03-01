@@ -106,13 +106,12 @@ export function noteAtInterval(root: NoteName, semitones: number): ResolvedNote 
 	const targetMidi = rootMidi + semitones;
 	const frequency = midiToFrequency(targetMidi);
 
-	// Work out which chromatic note and octave this lands on
+	// Work out which chromatic note this lands on
 	const semitoneInOctave = ((targetMidi % 12) + 12) % 12;
-	const octave = Math.floor(targetMidi / 12) - 1;
 	const chromatic = CHROMATIC_NAMES[semitoneInOctave];
 	const displayName = chromatic.sharp
-		? `${chromatic.name}#${octave}`
-		: `${chromatic.name}${octave}`;
+		? `${chromatic.name}#`
+		: `${chromatic.name}`;
 	const colour = NOTE_COLOURS[chromatic.name];
 
 	return { frequency, noteName: displayName, colour };
@@ -180,7 +179,7 @@ export function resolveFullStavePitch(
 			staffPosition: snapped,
 			pitchZone: zone,
 			frequency: midiToFrequency(sharpMidi),
-			noteName: `${note.name}#${note.octave}`,
+			noteName: `${note.name}#`,
 			colour: NOTE_COLOURS[note.name]
 		};
 	}
@@ -189,7 +188,7 @@ export function resolveFullStavePitch(
 		staffPosition: snapped,
 		pitchZone: zone,
 		frequency: note.frequency,
-		noteName: `${note.name}${note.octave}`,
+		noteName: `${note.name}`,
 		colour: NOTE_COLOURS[note.name]
 	};
 }
@@ -303,7 +302,7 @@ export function shiftPitch(
 				staffPosition: newPosition,
 				pitchZone: zone,
 				frequency: midiToFrequency(sharpMidi),
-				noteName: `${note.name}#${note.octave}`,
+				noteName: `${note.name}#`,
 				colour: NOTE_COLOURS[note.name]
 			};
 		}
@@ -312,7 +311,7 @@ export function shiftPitch(
 			staffPosition: newPosition,
 			pitchZone: zone,
 			frequency: note.frequency,
-			noteName: `${note.name}${note.octave}`,
+			noteName: `${note.name}`,
 			colour: NOTE_COLOURS[note.name]
 		};
 	} else if (staffMode === 'three-line') {
@@ -416,7 +415,7 @@ export function resolveNoteToStaffPitch(
 				staffPosition: pos,
 				pitchZone: zone,
 				frequency: midiToFrequency(sharpMidi),
-				noteName: `${note.name}#${note.octave}`,
+				noteName: `${note.name}#`,
 				colour: NOTE_COLOURS[note.name]
 			};
 		}
@@ -425,7 +424,7 @@ export function resolveNoteToStaffPitch(
 			staffPosition: pos,
 			pitchZone: zone,
 			frequency: note.frequency,
-			noteName: `${note.name}${note.octave}`,
+			noteName: `${note.name}`,
 			colour: NOTE_COLOURS[note.name]
 		};
 	}
@@ -520,7 +519,7 @@ export function remapNotes(
 				return {
 					...n,
 					frequency: midiToFrequency(sharpMidi),
-					noteName: `${staveNote.name}#${staveNote.octave}`,
+					noteName: `${staveNote.name}#`,
 					colour: NOTE_COLOURS[staveNote.name]
 				};
 			}
@@ -528,7 +527,7 @@ export function remapNotes(
 			return {
 				...n,
 				frequency: staveNote.frequency,
-				noteName: `${staveNote.name}${staveNote.octave}`,
+				noteName: `${staveNote.name}`,
 				colour: NOTE_COLOURS[staveNote.name]
 			};
 		});
@@ -569,7 +568,8 @@ export const DEFAULT_COMPOSER_SETTINGS: ComposerSettings = {
 	selectedDuration: 'quarter',
 	rootNote: 'C',
 	chordType: 'major',
-	interval: 'perfect-5th'
+	interval: 'perfect-5th',
+	showNoteLabels: true
 };
 
 const COMPOSER_SETTINGS_KEY = 'piano_composer_settings';

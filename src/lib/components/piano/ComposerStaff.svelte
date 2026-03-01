@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ComposedNote, ComposerKey, StaffMode, NoteDuration, NoteDefinition, PitchZone } from '$lib/types/piano';
+	import type { ComposedNote, ComposerKey, StaffMode, NoteDuration, PitchZone } from '$lib/types/piano';
 	import type { ResolvedPitch, ResolvedNote } from '$lib/utils/composer-data';
 	import {
 		TREBLE_CLEF_PATH,
@@ -20,8 +20,7 @@
 		selectedNoteId: string | null;
 		currentPlaybackIndex: number;
 		showColours: boolean;
-		activeNote?: NoteDefinition | null;
-		showColour?: boolean;
+		showNoteLabels: boolean;
 		rootNote: ComposerKey;
 		currentThreeLineNotes: Record<PitchZone, ResolvedNote>;
 		currentOneLineNotes: Record<'low' | 'high', ResolvedNote>;
@@ -36,8 +35,7 @@
 		selectedNoteId,
 		currentPlaybackIndex,
 		showColours,
-		activeNote = null,
-		showColour = false,
+		showNoteLabels,
 		rootNote,
 		currentThreeLineNotes,
 		currentOneLineNotes,
@@ -257,40 +255,6 @@
 		hoveringExistingNote = false;
 		hoveredNoteIndex = -1;
 	}
-
-	// Active piano note display (full stave mode only)
-	const ACTIVE_NOTE_X = 370; // Fixed position near right edge of initial viewport
-
-	let activeNoteY = $derived(activeNote ? yForStaffPosition(activeNote.staffPosition) : 0);
-
-	let activeNoteLedgerLines = $derived.by(() => {
-		if (!activeNote) return [];
-		const pos = activeNote.staffPosition;
-		const lines: number[] = [];
-		if (pos <= -2) {
-			for (let p = -2; p >= pos - (pos % 2 === 0 ? 0 : 1); p -= 2) {
-				lines.push(p);
-			}
-		}
-		if (pos >= 10) {
-			for (let p = 10; p <= pos + (pos % 2 === 0 ? 0 : 1); p += 2) {
-				lines.push(p);
-			}
-		}
-		return lines;
-	});
-
-	let activeNoteColour = $derived(
-		activeNote && showColour ? activeNote.colour : '#374151'
-	);
-
-	let activeNoteDisplayName = $derived(
-		activeNote
-			? activeNote.accidental === '#'
-				? `${activeNote.name}#`
-				: activeNote.name
-			: ''
-	);
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -433,14 +397,16 @@
 			{/if}
 
 			<!-- Note name label -->
-			<text
-				x={cx}
-				y={cy + (staffMode === 'full' ? 20 : 22)}
-				font-size="9"
-				font-weight="500"
-				fill={showColours ? fill : '#6b7280'}
-				text-anchor="middle"
-			>{note.noteName}</text>
+			{#if showNoteLabels}
+				<text
+					x={cx}
+					y={cy + (staffMode === 'full' ? 20 : 22)}
+					font-size="9"
+					font-weight="500"
+					fill={showColours ? fill : '#6b7280'}
+					text-anchor="middle"
+				>{note.noteName}</text>
+			{/if}
 		{/each}
 
 		<!-- Hover preview ghost note -->
@@ -496,14 +462,16 @@
 				{/if}
 
 				<!-- Note name -->
-				<text
-					x={px}
-					y={py + (staffMode === 'full' ? 20 : 22)}
-					font-size="9"
-					font-weight="500"
-					fill={previewColour}
-					text-anchor="middle"
-				>{hoverPreview.noteName}</text>
+				{#if showNoteLabels}
+					<text
+						x={px}
+						y={py + (staffMode === 'full' ? 20 : 22)}
+						font-size="9"
+						font-weight="500"
+						fill={previewColour}
+						text-anchor="middle"
+					>{hoverPreview.noteName}</text>
+				{/if}
 			</g>
 
 			<!-- Dashed line connecting cursor Y to placement position -->
@@ -517,55 +485,6 @@
 				stroke-dasharray="2,2"
 				opacity="0.4"
 			/>
-		{/if}
-
-		<!-- Active piano note indicator (full stave only) -->
-		{#if activeNote && staffMode === 'full'}
-			<g class="active-note-indicator" opacity="0.55">
-				<!-- Ledger lines -->
-				{#each activeNoteLedgerLines as pos}
-					<line
-						x1={ACTIVE_NOTE_X - 16}
-						y1={yForStaffPosition(pos)}
-						x2={ACTIVE_NOTE_X + 16}
-						y2={yForStaffPosition(pos)}
-						stroke="#9ca3af"
-						stroke-width="1"
-					/>
-				{/each}
-
-				<!-- Sharp symbol -->
-				{#if activeNote.accidental === '#'}
-					<text
-						x={ACTIVE_NOTE_X - 18}
-						y={activeNoteY + 4}
-						font-size="14"
-						font-weight="bold"
-						fill={activeNoteColour}
-						text-anchor="middle"
-					>#</text>
-				{/if}
-
-				<!-- Note head (filled ellipse, no stem) -->
-				<ellipse
-					cx={ACTIVE_NOTE_X}
-					cy={activeNoteY}
-					rx="8"
-					ry="6"
-					fill={activeNoteColour}
-					transform="rotate(-15, {ACTIVE_NOTE_X}, {activeNoteY})"
-				/>
-
-				<!-- Note name label -->
-				<text
-					x={ACTIVE_NOTE_X}
-					y={activeNoteY + 22}
-					font-size="11"
-					font-weight="600"
-					fill={activeNoteColour}
-					text-anchor="middle"
-				>{activeNoteDisplayName}{activeNote.octave}</text>
-			</g>
 		{/if}
 	</svg>
 </div>
@@ -588,9 +507,5 @@
 		display: block;
 		width: 100%;
 		height: auto;
-	}
-
-	.composer-staff-svg :global(.active-note-indicator) {
-		transition: opacity 0.2s ease;
 	}
 </style>

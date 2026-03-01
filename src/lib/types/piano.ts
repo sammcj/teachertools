@@ -58,4 +58,5 @@ export interface ComposerSettings {
 	rootNote: ComposerKey;
 	chordType: ChordType;
 	interval: IntervalType;
+	showNoteLabels: boolean;
 }

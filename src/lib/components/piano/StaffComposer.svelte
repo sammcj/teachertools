@@ -11,7 +11,7 @@
 		Waveform,
 		NoteDefinition
 	} from '$lib/types/piano';
-	import type { ResolvedPitch } from '$lib/utils/composer-data';
+	import type { ResolvedPitch, ResolvedNote } from '$lib/utils/composer-data';
 	import {
 		DEFAULT_COMPOSER_SETTINGS,
 		loadComposerSettings,
@@ -25,23 +25,23 @@
 		oneLineZoneNotes,
 		INTERVAL_LABELS
 	} from '$lib/utils/composer-data';
+	import { NOTE_COLOURS } from '$lib/utils/piano-data';
 	import { playNoteForDuration, ensureAudioContext } from '$lib/utils/audio';
 	import { playSequence } from '$lib/utils/playback';
 	import ComposerStaff from './ComposerStaff.svelte';
 	import DurationPicker from './DurationPicker.svelte';
 	import PlaybackControls from './PlaybackControls.svelte';
 	import Button from '$lib/components/shared/Button.svelte';
-	import { Trash2, Volume2, VolumeX } from 'lucide-svelte';
+	import { Trash2, Volume2, VolumeX, Type } from 'lucide-svelte';
 
 	interface Props {
 		waveform: Waveform;
 		showColours: boolean;
 		soundEnabled: boolean;
-		activeNote?: NoteDefinition | null;
 		pianoNoteEvent?: { note: NoteDefinition } | null;
 	}
 
-	let { waveform, showColours, soundEnabled, activeNote = null, pianoNoteEvent = null }: Props = $props();
+	let { waveform, showColours, soundEnabled, pianoNoteEvent = null }: Props = $props();
 
 	let composerSettings = $state<ComposerSettings>(loadComposerSettings());
 
@@ -64,6 +64,21 @@
 	// Derived zone notes for simplified modes
 	let currentThreeLineNotes = $derived(threeLineZoneNotes(composerSettings.rootNote, composerSettings.chordType));
 	let currentOneLineNotes = $derived(oneLineZoneNotes(composerSettings.rootNote, composerSettings.interval));
+
+	// One-line zone overrides: when teacher presses a piano key on a selected note,
+	// all notes in that zone change to the pressed key (and future placements use it)
+	let oneLineZoneOverrides = $state<{ low: ResolvedNote | null; high: ResolvedNote | null }>({
+		low: null, high: null
+	});
+
+	// Effective one-line notes: overrides take priority over computed values
+	let effectiveOneLineNotes = $derived.by(() => {
+		const base = oneLineZoneNotes(composerSettings.rootNote, composerSettings.interval);
+		return {
+			low: oneLineZoneOverrides.low ?? base.low,
+			high: oneLineZoneOverrides.high ?? base.high
+		};
+	});
 
 	function persistSettings() {
 		saveComposerSettings(composerSettings);
@@ -88,6 +103,7 @@
 		if (key === composerSettings.rootNote) return;
 		composerSettings = { ...composerSettings, rootNote: key };
 		persistSettings();
+		oneLineZoneOverrides = { low: null, high: null };
 		remapCurrentNotes();
 	}
 
@@ -102,6 +118,7 @@
 		if (interval === composerSettings.interval) return;
 		composerSettings = { ...composerSettings, interval };
 		persistSettings();
+		oneLineZoneOverrides = { low: null, high: null };
 		remapCurrentNotes();
 	}
 
@@ -126,6 +143,11 @@
 
 	function togglePlayOnPlace() {
 		composerSettings = { ...composerSettings, playOnPlace: !composerSettings.playOnPlace };
+		persistSettings();
+	}
+
+	function toggleNoteLabels() {
+		composerSettings = { ...composerSettings, showNoteLabels: !composerSettings.showNoteLabels };
 		persistSettings();
 	}
 
@@ -208,7 +230,7 @@
 			direction,
 			composerSettings.rootNote,
 			currentThreeLineNotes,
-			currentOneLineNotes
+			effectiveOneLineNotes
 		);
 		if (!newPitch) return;
 
@@ -251,19 +273,46 @@
 		}
 	}
 
-	// When a piano key is played while a note is selected, update its pitch
+	// When a piano key is played while a note is selected, update its pitch.
+	// For one-line mode: updates ALL notes in the same zone and overrides
+	// that zone for future placements.
 	function applyPianoNoteToSelected(pianoNote: NoteDefinition) {
 		if (!selectedNoteId) return;
 
 		const noteIdx = composedNotes.findIndex((n) => n.id === selectedNoteId);
 		if (noteIdx === -1) return;
 
+		// One-line mode: override the entire zone
+		if (composerSettings.staffMode === 'one-line') {
+			const selectedNote = composedNotes[noteIdx];
+			const zone = selectedNote.pitchZone as 'low' | 'high';
+			const noteName = pianoNote.accidental === '#'
+				? `${pianoNote.name}#`
+				: pianoNote.name;
+			const resolved: ResolvedNote = {
+				frequency: pianoNote.frequency,
+				noteName,
+				colour: NOTE_COLOURS[pianoNote.name]
+			};
+
+			// Store override for future placements
+			oneLineZoneOverrides = { ...oneLineZoneOverrides, [zone]: resolved };
+
+			// Update all notes in this zone
+			updateCurrentModeNotes(composedNotes.map((n) =>
+				n.pitchZone === zone
+					? { ...n, frequency: resolved.frequency, noteName: resolved.noteName, colour: resolved.colour }
+					: n
+			));
+			return;
+		}
+
 		const resolved = resolveNoteToStaffPitch(
 			composerSettings.staffMode,
 			pianoNote,
 			composerSettings.rootNote,
 			currentThreeLineNotes,
-			currentOneLineNotes
+			effectiveOneLineNotes
 		);
 		if (!resolved) return;
 
@@ -368,6 +417,17 @@
 			{/if}
 		</button>
 
+		<!-- Note labels toggle -->
+		<button
+			class="icon-btn"
+			class:active={composerSettings.showNoteLabels}
+			aria-label={composerSettings.showNoteLabels ? 'Note labels: on' : 'Note labels: off'}
+			title={composerSettings.showNoteLabels ? 'Note labels: on' : 'Note labels: off'}
+			onclick={toggleNoteLabels}
+		>
+			<Type size={14} />
+		</button>
+
 		<div class="toolbar-separator"></div>
 
 		<!-- Duration picker -->
@@ -390,7 +450,11 @@
 		<!-- Contextual hint -->
 		<span class="toolbar-hint">
 			{#if selectedNoteId}
-				Play a key or &#x2191;&#x2193; to change pitch &middot; Delete to remove
+				{#if composerSettings.staffMode === 'one-line'}
+					Play a key to set zone pitch &middot; Delete to remove
+				{:else}
+					Play a key or &#x2191;&#x2193; to change pitch &middot; Delete to remove
+				{/if}
 			{:else if composedNotes.length > 0}
 				Click a note to select it
 			{:else}
@@ -413,11 +477,10 @@
 		{selectedNoteId}
 		{currentPlaybackIndex}
 		{showColours}
-		{activeNote}
-		showColour={showColours}
+		showNoteLabels={composerSettings.showNoteLabels}
 		rootNote={composerSettings.rootNote}
 		{currentThreeLineNotes}
-		{currentOneLineNotes}
+		currentOneLineNotes={effectiveOneLineNotes}
 		onnoteplace={handleNotePlace}
 		onnoteselect={handleNoteSelect}
 	/>
