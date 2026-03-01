@@ -14,6 +14,7 @@
 	import type { ResolvedPitch, ResolvedNote } from '$lib/utils/composer-data';
 	import {
 		DEFAULT_COMPOSER_SETTINGS,
+		DURATION_BEATS,
 		loadComposerSettings,
 		saveComposerSettings,
 		staffModeLabel,
@@ -156,10 +157,19 @@
 	function setNotesPerLine(count: number) {
 		composerSettings = { ...composerSettings, notesPerLine: count };
 		persistSettings();
-		// Truncate excess notes when reducing the limit
-		if (count > 0 && composedNotes.length > count) {
-			updateCurrentModeNotes(composedNotes.slice(0, count));
-			selectedNoteIds = new Set();
+		// Truncate notes that exceed the new beat limit
+		if (count > 0) {
+			let beats = 0;
+			let keepCount = 0;
+			for (const n of composedNotes) {
+				if (beats + DURATION_BEATS[n.duration] > count) break;
+				beats += DURATION_BEATS[n.duration];
+				keepCount++;
+			}
+			if (keepCount < composedNotes.length) {
+				updateCurrentModeNotes(composedNotes.slice(0, keepCount));
+				selectedNoteIds = new Set();
+			}
 		}
 	}
 
@@ -184,9 +194,12 @@
 	}
 
 	function handleNotePlace(resolved: ResolvedPitch) {
-		// In fixed mode, don't allow more notes than the limit
-		if (composerSettings.notesPerLine > 0 && composedNotes.length >= composerSettings.notesPerLine) {
-			return;
+		// In fixed mode, don't allow placing if it would exceed the beat limit
+		if (composerSettings.notesPerLine > 0) {
+			const currentBeats = composedNotes.reduce((sum, n) => sum + DURATION_BEATS[n.duration], 0);
+			if (currentBeats + DURATION_BEATS[composerSettings.selectedDuration] > composerSettings.notesPerLine) {
+				return;
+			}
 		}
 
 		const note: ComposedNote = {
@@ -246,8 +259,10 @@
 
 	function startPlayback() {
 		ensureAudioContext();
+		// Snapshot the notes array so playback uses exactly what's visible
+		const notesToPlay = [...composedNotes];
 		abortPlayback = playSequence(
-			composedNotes,
+			notesToPlay,
 			composerSettings.bpm,
 			waveform,
 			(index) => { currentPlaybackIndex = index; },
@@ -517,11 +532,11 @@
 			class="toolbar-select"
 			value={composerSettings.notesPerLine}
 			onchange={(e) => setNotesPerLine(Number(e.currentTarget.value))}
-			aria-label="Notes per line"
-			title="Notes per line"
+			aria-label="Beats per bar"
+			title="Beats per bar (quarter note = 1 beat)"
 		>
 			{#each [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as count}
-				<option value={count}>{count}</option>
+				<option value={count}>{count} {count === 1 ? 'beat' : 'beats'}</option>
 			{/each}
 			<option value={0}>Unlimited</option>
 		</select>

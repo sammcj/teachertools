@@ -5,6 +5,7 @@
 		TREBLE_CLEF_PATH,
 		STAFF_LINE_POSITIONS,
 		STAFF_GEOMETRY,
+		DURATION_BEATS,
 		yForStaffPosition,
 		resolveFullStavePitch,
 		resolveThreeLinePitch,
@@ -57,27 +58,45 @@
 		staffMode === 'full' ? 80 + keySigPositions.length * 10 : 45
 	);
 
-	// Layout: each note gets an equal-width slot.
-	// Fixed mode (1-10): slots sized so N notes fill the stave width exactly.
-	// Unlimited mode (0): fixed slot width, stave grows as notes are added.
+	// Layout: beat-proportional positioning.
+	// notesPerLine represents quarter-note beats (e.g. 4 = 4 quarter notes worth).
+	// Fixed mode (1-10): the available width maps to that many beats.
+	// Unlimited mode (0): fixed width per beat, stave grows as notes are added.
 	const VIEW_BASE_WIDTH = 400;
 	const RIGHT_PAD = 20;
-	const UNLIMITED_SLOT_WIDTH = 50;
+	const UNLIMITED_BEAT_WIDTH = 50;
 
-	let slotWidth = $derived(
+	// Total beats used by placed notes
+	let totalBeats = $derived(
+		notes.reduce((sum, n) => sum + DURATION_BEATS[n.duration], 0)
+	);
+
+	// Width of one quarter-note beat in SVG units
+	let beatWidth = $derived(
 		notesPerLine > 0
 			? (VIEW_BASE_WIDTH - startX - RIGHT_PAD) / notesPerLine
-			: UNLIMITED_SLOT_WIDTH
+			: UNLIMITED_BEAT_WIDTH
 	);
+
+	// Cumulative beat offset for each note index
+	let noteBeatOffsets = $derived.by(() => {
+		const offsets: number[] = [];
+		let beat = 0;
+		for (const n of notes) {
+			offsets.push(beat);
+			beat += DURATION_BEATS[n.duration];
+		}
+		return offsets;
+	});
 
 	// ViewBox width: always VIEW_BASE_WIDTH for fixed mode, grows for unlimited
 	let viewBoxWidth = $derived.by(() => {
 		if (notesPerLine > 0) {
 			return VIEW_BASE_WIDTH;
 		}
-		// Unlimited: grow with notes, minimum shows at least 6 slots
-		const slotsNeeded = Math.max(6, notes.length + 1);
-		return Math.max(VIEW_BASE_WIDTH, startX + slotsNeeded * UNLIMITED_SLOT_WIDTH + RIGHT_PAD);
+		// Unlimited: grow with beats, minimum shows at least 6 beats
+		const beatsNeeded = Math.max(6, totalBeats + DURATION_BEATS['quarter']);
+		return Math.max(VIEW_BASE_WIDTH, startX + beatsNeeded * UNLIMITED_BEAT_WIDTH + RIGHT_PAD);
 	});
 
 	let staffLineEnd = $derived(viewBoxWidth);
@@ -175,7 +194,10 @@
 	}
 
 	function noteX(index: number): number {
-		return startX + index * slotWidth + slotWidth / 2;
+		const beatOffset = noteBeatOffsets[index] ?? totalBeats;
+		const noteDurationBeats = index < notes.length ? DURATION_BEATS[notes[index].duration] : DURATION_BEATS['quarter'];
+		// Centre the note within its beat-width span
+		return startX + beatOffset * beatWidth + (noteDurationBeats * beatWidth) / 2;
 	}
 
 	function noteY(note: ComposedNote): number {
@@ -266,12 +288,14 @@
 	let hoveringExistingNote = $state(false);
 	let hoveredNoteIndex = $state(-1);
 
-	// Whether the stave is full (no more notes can be placed)
-	let isFull = $derived(notesPerLine > 0 && notes.length >= notesPerLine);
+	// Whether the stave is full (no more beats can fit the selected duration)
+	let isFull = $derived(
+		notesPerLine > 0 && totalBeats + DURATION_BEATS[selectedDuration] > notesPerLine
+	);
 
 	// X position where the next placed note will land
 	let nextNoteX = $derived(
-		startX + notes.length * slotWidth + slotWidth / 2
+		startX + totalBeats * beatWidth + (DURATION_BEATS[selectedDuration] * beatWidth) / 2
 	);
 
 	// Y position of the hover preview
