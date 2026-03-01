@@ -597,6 +597,35 @@ export function saveComposerSettings(settings: ComposerSettings): void {
 	}
 }
 
+const COMPOSER_NOTES_KEY = 'piano_composer_notes';
+
+type NotesByMode = Record<StaffMode, ComposedNote[]>;
+
+const EMPTY_NOTES: NotesByMode = { full: [], 'three-line': [], 'one-line': [] };
+
+/** Load composed notes from localStorage */
+export function loadComposerNotes(): NotesByMode {
+	try {
+		const stored = localStorage.getItem(COMPOSER_NOTES_KEY);
+		if (stored) {
+			const parsed = JSON.parse(stored);
+			return { ...EMPTY_NOTES, ...parsed };
+		}
+	} catch {
+		// Corrupted storage
+	}
+	return { ...EMPTY_NOTES };
+}
+
+/** Persist composed notes to localStorage */
+export function saveComposerNotes(notes: NotesByMode): void {
+	try {
+		localStorage.setItem(COMPOSER_NOTES_KEY, JSON.stringify(notes));
+	} catch {
+		// Storage full or unavailable
+	}
+}
+
 /**
  * Treble clef SVG path - G clef glyph from a Unicode reference font.
  * Used by ComposerStaff.svelte.

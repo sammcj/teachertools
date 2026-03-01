@@ -23,7 +23,9 @@
 		remapNotes,
 		threeLineZoneNotes,
 		oneLineZoneNotes,
-		INTERVAL_LABELS
+		INTERVAL_LABELS,
+		loadComposerNotes,
+		saveComposerNotes
 	} from '$lib/utils/composer-data';
 	import { NOTE_COLOURS } from '$lib/utils/piano-data';
 	import { playNoteForDuration, ensureAudioContext } from '$lib/utils/audio';
@@ -45,10 +47,8 @@
 
 	let composerSettings = $state<ComposerSettings>(loadComposerSettings());
 
-	// Per-mode note storage: switching modes preserves notes
-	let notesByMode = $state<Record<StaffMode, ComposedNote[]>>({
-		full: [], 'three-line': [], 'one-line': []
-	});
+	// Per-mode note storage: persisted to localStorage, survives refresh
+	let notesByMode = $state(loadComposerNotes());
 	let composedNotes = $derived(notesByMode[composerSettings.staffMode]);
 
 	let selectedNoteIds = $state<Set<string>>(new Set());
@@ -90,6 +90,7 @@
 
 	function updateCurrentModeNotes(notes: ComposedNote[]) {
 		notesByMode = { ...notesByMode, [currentMode()]: notes };
+		saveComposerNotes(notesByMode);
 	}
 
 	function setStaffMode(mode: StaffMode) {
@@ -134,6 +135,7 @@
 			composerSettings.interval
 		);
 		notesByMode = { ...notesByMode, [mode]: remapped };
+		saveComposerNotes(notesByMode);
 	}
 
 	function setDuration(duration: NoteDuration) {
