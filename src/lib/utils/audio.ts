@@ -68,8 +68,9 @@ export function startNote(frequency: number, waveform: Waveform): NoteHandle {
 			const t = audioCtx.currentTime;
 			gain.gain.cancelScheduledValues(t);
 			gain.gain.setValueAtTime(gain.gain.value, t);
-			gain.gain.exponentialRampToValueAtTime(0.001, t + RELEASE);
-			oscillator.stop(t + RELEASE + 0.01);
+			// setTargetAtTime decays smoothly to true zero (no click/crunch artifact)
+			gain.gain.setTargetAtTime(0, t, RELEASE / 5);
+			oscillator.stop(t + RELEASE + 0.05);
 		},
 		releaseTime: RELEASE,
 	};
@@ -88,7 +89,7 @@ export function playNoteForDuration(
 	return new Promise((resolve) => {
 		setTimeout(() => {
 			stopNote(handle);
-			setTimeout(resolve, handle.releaseTime * 1000 + 20);
+			setTimeout(resolve, handle.releaseTime * 1000 + 50);
 		}, durationMs);
 	});
 }

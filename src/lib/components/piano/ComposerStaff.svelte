@@ -17,7 +17,7 @@
 		staffMode: StaffMode;
 		selectedDuration: NoteDuration;
 		notesPerLine: number;
-		selectedNoteId: string | null;
+		selectedNoteIds: Set<string>;
 		currentPlaybackIndex: number;
 		showColours: boolean;
 		showNoteLabels: boolean;
@@ -25,7 +25,7 @@
 		currentThreeLineNotes: Record<PitchZone, ResolvedNote>;
 		currentOneLineNotes: Record<'low' | 'high', ResolvedNote>;
 		onnoteplace: (note: Omit<ComposedNote, 'id' | 'duration'>) => void;
-		onnoteselect: (id: string | null) => void;
+		onnoteselect: (id: string | null, shiftKey?: boolean) => void;
 	}
 
 	let {
@@ -33,7 +33,7 @@
 		staffMode,
 		selectedDuration,
 		notesPerLine,
-		selectedNoteId,
+		selectedNoteIds,
 		currentPlaybackIndex,
 		showColours,
 		showNoteLabels,
@@ -168,7 +168,7 @@
 			const dx = svgPt.x - nx;
 			const dy = svgPt.y - ny;
 			if (dx * dx + dy * dy < 144) {
-				onnoteselect(notes[i].id);
+				onnoteselect(notes[i].id, e.shiftKey);
 				return;
 			}
 		}
@@ -385,7 +385,7 @@
 			{@const cy = noteY(note)}
 			{@const fill = noteFill(note)}
 			{@const stroke = noteStroke(note)}
-			{@const isSelected = selectedNoteId === note.id}
+			{@const isSelected = selectedNoteIds.has(note.id)}
 			{@const isPlayback = currentPlaybackIndex === i}
 
 			<!-- Ledger lines (full stave only) -->

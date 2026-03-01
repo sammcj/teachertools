@@ -38,7 +38,7 @@ const NOISE_DURATION = 0.015; // 15ms hammer strike
 const NOISE_BANDPASS_FREQ = 4000;
 const NOISE_GAIN = 0.08;
 const ATTACK = 0.005;
-const RELEASE = 0.08;
+const RELEASE = 0.2;
 const FILTER_DECAY = 0.15;
 const REVERB_WET = 0.15;
 
@@ -174,13 +174,13 @@ export function startPianoNote(frequency: number, ctx: AudioContext): NoteHandle
 		stopped = true;
 		const t = ctx.currentTime;
 
-		// Release envelope
+		// Release envelope - setTargetAtTime decays smoothly to true zero
 		envelope.gain.cancelScheduledValues(t);
 		envelope.gain.setValueAtTime(envelope.gain.value, t);
-		envelope.gain.exponentialRampToValueAtTime(0.001, t + RELEASE);
+		envelope.gain.setTargetAtTime(0, t, RELEASE / 5);
 
-		// Stop all oscillators after release
-		const stopTime = t + RELEASE + 0.01;
+		// Stop all oscillators after release with buffer
+		const stopTime = t + RELEASE + 0.05;
 		for (const osc of oscillators) {
 			osc.stop(stopTime);
 		}

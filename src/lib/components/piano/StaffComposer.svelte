@@ -51,7 +51,7 @@
 	});
 	let composedNotes = $derived(notesByMode[composerSettings.staffMode]);
 
-	let selectedNoteId = $state<string | null>(null);
+	let selectedNoteIds = $state<Set<string>>(new Set());
 	let isPlaying = $state(false);
 	let currentPlaybackIndex = $state(-1);
 	let abortPlayback: (() => void) | null = null;
@@ -94,7 +94,7 @@
 
 	function setStaffMode(mode: StaffMode) {
 		if (mode === composerSettings.staffMode) return;
-		selectedNoteId = null;
+		selectedNoteIds = new Set();
 		composerSettings = { ...composerSettings, staffMode: mode };
 		persistSettings();
 	}
@@ -137,11 +137,11 @@
 	}
 
 	function setDuration(duration: NoteDuration) {
-		// If a note is selected, change its duration
-		if (selectedNoteId) {
+		// If any notes are selected, change their durations
+		if (selectedNoteIds.size > 0) {
 			updateCurrentModeNotes(
 				composedNotes.map((n) =>
-					n.id === selectedNoteId ? { ...n, duration } : n
+					selectedNoteIds.has(n.id) ? { ...n, duration } : n
 				)
 			);
 		}
@@ -189,21 +189,42 @@
 		}
 	}
 
-	function handleNoteSelect(id: string | null) {
-		selectedNoteId = id;
+	function handleNoteSelect(id: string | null, shiftKey = false) {
+		if (id === null) {
+			selectedNoteIds = new Set();
+			return;
+		}
+		if (shiftKey) {
+			// Toggle the note in the selection set
+			const next = new Set(selectedNoteIds);
+			if (next.has(id)) {
+				next.delete(id);
+			} else {
+				next.add(id);
+			}
+			selectedNoteIds = next;
+		} else {
+			selectedNoteIds = new Set([id]);
+			// Reset duration picker to match the clicked note
+			const note = composedNotes.find((n) => n.id === id);
+			if (note) {
+				composerSettings = { ...composerSettings, selectedDuration: note.duration };
+				persistSettings();
+			}
+		}
 	}
 
 	function deleteSelected() {
-		if (!selectedNoteId) return;
-		updateCurrentModeNotes(composedNotes.filter((n) => n.id !== selectedNoteId));
-		selectedNoteId = null;
+		if (selectedNoteIds.size === 0) return;
+		updateCurrentModeNotes(composedNotes.filter((n) => !selectedNoteIds.has(n.id)));
+		selectedNoteIds = new Set();
 	}
 
 	function clearAll() {
 		if (composedNotes.length === 0) return;
 		if (!confirm('Clear all notes?')) return;
 		updateCurrentModeNotes([]);
-		selectedNoteId = null;
+		selectedNoteIds = new Set();
 	}
 
 	function handlePlay() {
@@ -233,55 +254,60 @@
 	}
 
 	function changeSelectedPitch(direction: 1 | -1) {
-		if (!selectedNoteId) return;
-		const noteIndex = composedNotes.findIndex((n) => n.id === selectedNoteId);
-		if (noteIndex === -1) return;
-		const note = composedNotes[noteIndex];
-		const newPitch = shiftPitch(
-			composerSettings.staffMode,
-			note.staffPosition,
-			note.pitchZone,
-			direction,
-			composerSettings.rootNote,
-			currentThreeLineNotes,
-			effectiveOneLineNotes
-		);
-		if (!newPitch) return;
+		if (selectedNoteIds.size === 0) return;
+		const updated = [...composedNotes];
+		let anyChanged = false;
+		let lastFrequency = 0;
 
-		updateCurrentModeNotes(composedNotes.map((n, i) =>
-			i === noteIndex
-				? {
-						...n,
-						staffPosition: newPitch.staffPosition,
-						pitchZone: newPitch.pitchZone,
-						frequency: newPitch.frequency,
-						noteName: newPitch.noteName,
-						colour: newPitch.colour
-					}
-				: n
-		));
+		for (let i = 0; i < updated.length; i++) {
+			if (!selectedNoteIds.has(updated[i].id)) continue;
+			const note = updated[i];
+			const newPitch = shiftPitch(
+				composerSettings.staffMode,
+				note.staffPosition,
+				note.pitchZone,
+				direction,
+				composerSettings.rootNote,
+				currentThreeLineNotes,
+				effectiveOneLineNotes
+			);
+			if (!newPitch) continue;
+			updated[i] = {
+				...note,
+				staffPosition: newPitch.staffPosition,
+				pitchZone: newPitch.pitchZone,
+				frequency: newPitch.frequency,
+				noteName: newPitch.noteName,
+				colour: newPitch.colour
+			};
+			lastFrequency = newPitch.frequency;
+			anyChanged = true;
+		}
 
-		if (composerSettings.playOnPlace && soundEnabled) {
+		if (!anyChanged) return;
+		updateCurrentModeNotes(updated);
+
+		if (composerSettings.playOnPlace && soundEnabled && lastFrequency > 0) {
 			ensureAudioContext();
-			playNoteForDuration(newPitch.frequency, waveform, 200);
+			playNoteForDuration(lastFrequency, waveform, 200);
 		}
 	}
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Delete' || e.key === 'Backspace') {
-			if (selectedNoteId) {
+			if (selectedNoteIds.size > 0) {
 				e.preventDefault();
 				deleteSelected();
 			}
 		}
 		if (e.key === 'Escape') {
-			selectedNoteId = null;
+			selectedNoteIds = new Set();
 		}
-		if (e.key === 'ArrowUp' && selectedNoteId) {
+		if (e.key === 'ArrowUp' && selectedNoteIds.size > 0) {
 			e.preventDefault();
 			changeSelectedPitch(1);
 		}
-		if (e.key === 'ArrowDown' && selectedNoteId) {
+		if (e.key === 'ArrowDown' && selectedNoteIds.size > 0) {
 			e.preventDefault();
 			changeSelectedPitch(-1);
 		}
@@ -291,15 +317,14 @@
 	// For one-line mode: updates ALL notes in the same zone and overrides
 	// that zone for future placements.
 	function applyPianoNoteToSelected(pianoNote: NoteDefinition) {
-		if (!selectedNoteId) return;
+		if (selectedNoteIds.size === 0) return;
 
-		const noteIdx = composedNotes.findIndex((n) => n.id === selectedNoteId);
-		if (noteIdx === -1) return;
+		const firstSelected = composedNotes.find((n) => selectedNoteIds.has(n.id));
+		if (!firstSelected) return;
 
-		// One-line mode: override the entire zone
+		// One-line mode: override the entire zone (based on first selected note's zone)
 		if (composerSettings.staffMode === 'one-line') {
-			const selectedNote = composedNotes[noteIdx];
-			const zone = selectedNote.pitchZone as 'low' | 'high';
+			const zone = firstSelected.pitchZone as 'low' | 'high';
 			const noteName = pianoNote.accidental === '#'
 				? `${pianoNote.name}#`
 				: pianoNote.name;
@@ -330,8 +355,8 @@
 		);
 		if (!resolved) return;
 
-		updateCurrentModeNotes(composedNotes.map((n, i) =>
-			i === noteIdx
+		updateCurrentModeNotes(composedNotes.map((n) =>
+			selectedNoteIds.has(n.id)
 				? {
 						...n,
 						staffPosition: resolved.staffPosition,
@@ -477,14 +502,16 @@
 
 		<!-- Contextual hint -->
 		<span class="toolbar-hint">
-			{#if selectedNoteId}
+			{#if selectedNoteIds.size > 1}
+				{selectedNoteIds.size} notes selected &middot; Delete to remove
+			{:else if selectedNoteIds.size === 1}
 				{#if composerSettings.staffMode === 'one-line'}
 					Play a key to set zone pitch &middot; Delete to remove
 				{:else}
 					Play a key or &#x2191;&#x2193; to change pitch &middot; Delete to remove
 				{/if}
 			{:else if composedNotes.length > 0}
-				Click a note to select it
+				Click a note to select &middot; Shift+click for multi-select
 			{:else}
 				Click the staff to place notes
 			{/if}
@@ -503,7 +530,7 @@
 		staffMode={composerSettings.staffMode}
 		selectedDuration={composerSettings.selectedDuration}
 		notesPerLine={composerSettings.notesPerLine}
-		{selectedNoteId}
+		{selectedNoteIds}
 		{currentPlaybackIndex}
 		{showColours}
 		showNoteLabels={composerSettings.showNoteLabels}
