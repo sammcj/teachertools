@@ -107,22 +107,31 @@
 		low: currentOneLineNotes.low.noteName
 	});
 
-	// Beam groups: consecutive eighth notes joined in pairs (groups of 2).
-	// A run of 4 consecutive eighths becomes two beam groups; a run of 3 becomes one pair + one unbeamed.
+	// Beam groups: consecutive eighth notes joined in even groups (2 or 4).
+	// A run of 4 becomes one group of 4. A run of 3 becomes one pair + one unbeamed.
+	// A run of 5 becomes a group of 4 + one unbeamed. A run of 6 becomes 4 + 2, etc.
 	let beamGroups = $derived.by(() => {
 		const groups: { start: number; end: number }[] = [];
 		let i = 0;
 		while (i < notes.length) {
 			if (notes[i].duration === 'eighth') {
-				// Find the full run of consecutive eighths
 				const runStart = i;
 				while (i + 1 < notes.length && notes[i + 1].duration === 'eighth') {
 					i++;
 				}
-				const runEnd = i;
-				// Split the run into pairs
-				for (let j = runStart; j + 1 <= runEnd; j += 2) {
-					groups.push({ start: j, end: j + 1 });
+				const runLength = i - runStart + 1;
+				let j = runStart;
+				let remaining = runLength;
+				while (remaining >= 2) {
+					if (remaining >= 4) {
+						groups.push({ start: j, end: j + 3 });
+						j += 4;
+						remaining -= 4;
+					} else if (remaining >= 2) {
+						groups.push({ start: j, end: j + 1 });
+						j += 2;
+						remaining -= 2;
+					}
 				}
 			}
 			i++;
@@ -139,6 +148,25 @@
 			}
 		}
 		return set;
+	});
+
+	// For each beam group, compute the Y of the beam bar (highest stem top across all notes)
+	// and map each note index to its required stem-top Y so stems extend to meet the beam.
+	const STEM_LENGTH = 22;
+	let beamYMap = $derived.by(() => {
+		const map = new Map<number, number>();
+		for (const g of beamGroups) {
+			// Find the minimum (highest on screen) stem-top Y in the group
+			let beamY = Infinity;
+			for (let i = g.start; i <= g.end; i++) {
+				const stemTop = noteY(notes[i]) - STEM_LENGTH;
+				if (stemTop < beamY) beamY = stemTop;
+			}
+			for (let i = g.start; i <= g.end; i++) {
+				map.set(i, beamY);
+			}
+		}
+		return map;
 	});
 
 	/** Display label for a note name - converts to solfa if enabled */
@@ -450,9 +478,10 @@
 				/>
 			{/if}
 
-			<!-- Stem -->
+			<!-- Stem (extends to beam bar if beamed) -->
 			{#if hasStem(note.duration)}
-				<line x1={cx + 6} y1={cy} x2={cx + 6} y2={cy - 22} stroke={stroke} stroke-width="1.5" />
+				{@const stemTopY = beamYMap.get(i) ?? (cy - STEM_LENGTH)}
+				<line x1={cx + 6} y1={cy} x2={cx + 6} y2={stemTopY} stroke={stroke} stroke-width="1.5" />
 			{/if}
 
 			<!-- Flag (eighth, only if not beamed) -->
@@ -475,11 +504,10 @@
 
 		<!-- Beam bars connecting consecutive eighth notes -->
 		{#each beamGroups as group}
+			{@const beamY = beamYMap.get(group.start) ?? (noteY(notes[group.start]) - STEM_LENGTH)}
 			{@const x1 = noteX(group.start) + 6}
-			{@const y1 = noteY(notes[group.start]) - 22}
 			{@const x2 = noteX(group.end) + 6}
-			{@const y2 = noteY(notes[group.end]) - 22}
-			<line {x1} {y1} {x2} {y2} stroke="#374151" stroke-width="3" />
+			<line {x1} y1={beamY} {x2} y2={beamY} stroke="#374151" stroke-width="3" />
 		{/each}
 
 		<!-- Hover preview ghost note -->
