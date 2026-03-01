@@ -53,24 +53,28 @@ export function startNote(frequency: number, waveform: Waveform): NoteHandle {
 	oscillator.type = waveform;
 	oscillator.frequency.setValueAtTime(frequency, now);
 
+	// ADSR envelope gain
 	const gain = ctx.createGain();
 	gain.gain.setValueAtTime(0, now);
 	gain.gain.linearRampToValueAtTime(0.5, now + ATTACK);
 	gain.gain.linearRampToValueAtTime(SUSTAIN_LEVEL, now + ATTACK + DECAY);
 
+	// Separate release gain node so we never touch the ADSR automation
+	const releaseGain = ctx.createGain();
+	releaseGain.gain.value = 1.0;
+
 	oscillator.connect(gain);
-	gain.connect(ctx.destination);
+	gain.connect(releaseGain);
+	releaseGain.connect(ctx.destination);
 	oscillator.start(now);
 
 	return {
 		stop: () => {
 			if (!audioCtx) return;
 			const t = audioCtx.currentTime;
-			gain.gain.cancelScheduledValues(t);
-			gain.gain.setValueAtTime(gain.gain.value, t);
-			// setTargetAtTime decays smoothly to true zero (no click/crunch artifact)
-			gain.gain.setTargetAtTime(0, t, RELEASE / 5);
-			oscillator.stop(t + RELEASE + 0.05);
+			// Fade the release gain to zero without touching ADSR
+			releaseGain.gain.setTargetAtTime(0, t, RELEASE / 4);
+			oscillator.stop(t + RELEASE * 3);
 		},
 		releaseTime: RELEASE,
 	};

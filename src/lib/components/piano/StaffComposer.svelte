@@ -222,7 +222,6 @@
 
 	function clearAll() {
 		if (composedNotes.length === 0) return;
-		if (!confirm('Clear all notes?')) return;
 		updateCurrentModeNotes([]);
 		selectedNoteIds = new Set();
 	}

@@ -163,9 +163,14 @@ export function startPianoNote(frequency: number, ctx: AudioContext): NoteHandle
 
 	filter.connect(envelope);
 
+	// Separate release gain node so we never touch the ADSR automation
+	const releaseGain = ctx.createGain();
+	releaseGain.gain.value = 1.0;
+	envelope.connect(releaseGain);
+
 	// Connect to both dry and reverb paths
-	envelope.connect(dry);
-	envelope.connect(reverb);
+	releaseGain.connect(dry);
+	releaseGain.connect(reverb);
 
 	// --- Stop function ---
 	let stopped = false;
@@ -174,13 +179,11 @@ export function startPianoNote(frequency: number, ctx: AudioContext): NoteHandle
 		stopped = true;
 		const t = ctx.currentTime;
 
-		// Release envelope - setTargetAtTime decays smoothly to true zero
-		envelope.gain.cancelScheduledValues(t);
-		envelope.gain.setValueAtTime(envelope.gain.value, t);
-		envelope.gain.setTargetAtTime(0, t, RELEASE / 5);
+		// Fade the release gain to zero without touching ADSR
+		releaseGain.gain.setTargetAtTime(0, t, RELEASE / 4);
 
-		// Stop all oscillators after release with buffer
-		const stopTime = t + RELEASE + 0.05;
+		// Stop oscillators well after gain reaches silence
+		const stopTime = t + RELEASE * 3;
 		for (const osc of oscillators) {
 			osc.stop(stopTime);
 		}
