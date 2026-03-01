@@ -1,9 +1,12 @@
 import type { ComposedNote, Waveform } from '$lib/types/piano';
 import { durationMs } from '$lib/utils/composer-data';
-import { playNoteForDuration, ensureAudioContext } from '$lib/utils/audio';
+import { startNote, stopNote, ensureAudioContext } from '$lib/utils/audio';
 
 /**
  * Play a sequence of composed notes in order.
+ * Each note starts precisely after the previous note's rhythmic duration,
+ * allowing release envelopes to overlap with the next note's attack
+ * for natural-sounding timing.
  * Returns an abort function that stops playback immediately.
  */
 export function playSequence(
@@ -28,7 +31,15 @@ export function playSequence(
 
 			const note = notes[i];
 			const ms = durationMs(note.duration, bpm);
-			await playNoteForDuration(note.frequency, waveform, ms);
+
+			// Start the note and schedule its stop after the rhythmic duration
+			const handle = startNote(note.frequency, waveform);
+
+			// Wait exactly the rhythmic duration before starting the next note
+			await new Promise<void>((resolve) => setTimeout(resolve, ms));
+
+			// Stop with release envelope (tail overlaps next note naturally)
+			stopNote(handle);
 
 			if (aborted) break;
 		}

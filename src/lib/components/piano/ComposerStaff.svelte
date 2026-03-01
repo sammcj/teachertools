@@ -17,6 +17,7 @@
 		notes: ComposedNote[];
 		staffMode: StaffMode;
 		selectedDuration: NoteDuration;
+		beatsPerBar: number;
 		selectedNoteId: string | null;
 		currentPlaybackIndex: number;
 		showColours: boolean;
@@ -32,6 +33,7 @@
 		notes,
 		staffMode,
 		selectedDuration,
+		beatsPerBar,
 		selectedNoteId,
 		currentPlaybackIndex,
 		showColours,
@@ -84,6 +86,50 @@
 	let oneLineLabels = $derived({
 		high: currentOneLineNotes.high.noteName,
 		low: currentOneLineNotes.low.noteName
+	});
+
+	// Barline X positions: vertical lines at fixed beat-grid intervals
+	let barlineXPositions = $derived.by(() => {
+		if (beatsPerBar <= 0 || notes.length === 0) return [];
+		let totalBeats = 0;
+		for (const note of notes) {
+			totalBeats += DURATION_BEATS[note.duration];
+		}
+		const positions: number[] = [];
+		for (let beat = beatsPerBar; beat < totalBeats; beat += beatsPerBar) {
+			positions.push(startX + beat * BASE_NOTE_WIDTH);
+		}
+		return positions;
+	});
+
+	// Beam groups: consecutive eighth notes (2+ in a row) that share a beam bar
+	let beamGroups = $derived.by(() => {
+		const groups: { start: number; end: number }[] = [];
+		let i = 0;
+		while (i < notes.length) {
+			if (notes[i].duration === 'eighth') {
+				const start = i;
+				while (i + 1 < notes.length && notes[i + 1].duration === 'eighth') {
+					i++;
+				}
+				if (i > start) {
+					groups.push({ start, end: i });
+				}
+			}
+			i++;
+		}
+		return groups;
+	});
+
+	// Set of note indices that are in a beam group (skip individual flags for these)
+	let beamedIndices = $derived.by(() => {
+		const set = new Set<number>();
+		for (const g of beamGroups) {
+			for (let i = g.start; i <= g.end; i++) {
+				set.add(i);
+			}
+		}
+		return set;
 	});
 
 	function noteX(index: number): number {
@@ -395,8 +441,8 @@
 				<line x1={cx + 6} y1={cy} x2={cx + 6} y2={cy - 22} stroke={stroke} stroke-width="1.5" />
 			{/if}
 
-			<!-- Flag (eighth) -->
-			{#if hasFlag(note.duration)}
+			<!-- Flag (eighth, only if not beamed) -->
+			{#if hasFlag(note.duration) && !beamedIndices.has(i)}
 				<path d="M{cx + 6} {cy - 22} C{cx + 6} {cy - 22} {cx + 14} {cy - 15} {cx + 14} {cy - 8}" fill="none" stroke={stroke} stroke-width="1.5" />
 			{/if}
 
@@ -411,6 +457,27 @@
 					text-anchor="middle"
 				>{note.noteName}</text>
 			{/if}
+		{/each}
+
+		<!-- Beam bars connecting consecutive eighth notes -->
+		{#each beamGroups as group}
+			{@const x1 = noteX(group.start) + 6}
+			{@const y1 = noteY(notes[group.start]) - 22}
+			{@const x2 = noteX(group.end) + 6}
+			{@const y2 = noteY(notes[group.end]) - 22}
+			<line {x1} {y1} {x2} {y2} stroke="#374151" stroke-width="3" />
+		{/each}
+
+		<!-- Barlines -->
+		{#each barlineXPositions as bx}
+			<line
+				x1={bx}
+				y1={staffMode === 'full' ? yForStaffPosition(STAFF_LINE_POSITIONS[STAFF_LINE_POSITIONS.length - 1]) : staffMode === 'three-line' ? THREE_LINE_Y.high : ONE_LINE_Y - 15}
+				x2={bx}
+				y2={staffMode === 'full' ? yForStaffPosition(STAFF_LINE_POSITIONS[0]) : staffMode === 'three-line' ? THREE_LINE_Y.low : ONE_LINE_Y + 15}
+				stroke="#9ca3af"
+				stroke-width="1.5"
+			/>
 		{/each}
 
 		<!-- Hover preview ghost note -->

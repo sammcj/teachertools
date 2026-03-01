@@ -59,4 +59,5 @@ export interface ComposerSettings {
 	chordType: ChordType;
 	interval: IntervalType;
 	showNoteLabels: boolean;
+	beatsPerBar: number;
 }

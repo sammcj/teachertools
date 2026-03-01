@@ -141,6 +141,11 @@
 		persistSettings();
 	}
 
+	function setBeatsPerBar(beats: number) {
+		composerSettings = { ...composerSettings, beatsPerBar: beats };
+		persistSettings();
+	}
+
 	function togglePlayOnPlace() {
 		composerSettings = { ...composerSettings, playOnPlace: !composerSettings.playOnPlace };
 		persistSettings();
@@ -433,6 +438,19 @@
 		<!-- Duration picker -->
 		<DurationPicker selected={composerSettings.selectedDuration} onselect={setDuration} />
 
+		<!-- Beats per bar -->
+		<select
+			class="toolbar-select"
+			value={composerSettings.beatsPerBar}
+			onchange={(e) => setBeatsPerBar(Number(e.currentTarget.value))}
+			aria-label="Beats per bar"
+			title="Beats per bar"
+		>
+			{#each [2, 3, 4, 6, 8] as beats}
+				<option value={beats}>{beats}/4</option>
+			{/each}
+		</select>
+
 		<div class="toolbar-separator"></div>
 
 		<!-- Playback controls -->
@@ -474,6 +492,7 @@
 		notes={composedNotes}
 		staffMode={composerSettings.staffMode}
 		selectedDuration={composerSettings.selectedDuration}
+		beatsPerBar={composerSettings.beatsPerBar}
 		{selectedNoteId}
 		{currentPlaybackIndex}
 		{showColours}

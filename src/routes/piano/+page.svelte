@@ -105,14 +105,16 @@
 
 <div class="piano-page mx-auto flex flex-col gap-2 p-2 sm:gap-4 sm:p-4">
 
-	<div class="rounded-xl border border-border bg-surface p-2 sm:p-4">
-		<StaffComposer
-			waveform={settings.waveform}
-			showColours={settings.showColours}
-			soundEnabled={settings.soundEnabled}
-			{pianoNoteEvent}
-		/>
-	</div>
+	{#if settings.showStaff}
+		<div class="rounded-xl border border-border bg-surface p-2 sm:p-4">
+			<StaffComposer
+				waveform={settings.waveform}
+				showColours={settings.showColours}
+				soundEnabled={settings.soundEnabled}
+				{pianoNoteEvent}
+			/>
+		</div>
+	{/if}
 
 	<div class="rounded-xl border border-border bg-surface p-2 sm:p-4">
 		<PianoKeyboard

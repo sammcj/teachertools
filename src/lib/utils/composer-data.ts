@@ -569,7 +569,8 @@ export const DEFAULT_COMPOSER_SETTINGS: ComposerSettings = {
 	rootNote: 'C',
 	chordType: 'major',
 	interval: 'perfect-5th',
-	showNoteLabels: true
+	showNoteLabels: true,
+	beatsPerBar: 4
 };
 
 const COMPOSER_SETTINGS_KEY = 'piano_composer_settings';
