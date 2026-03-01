@@ -10,7 +10,7 @@
 	}
 
 	let { settings, onchange }: Props = $props();
-	let open = $state(false);
+	let open = $state(true);
 
 	function toggle(key: keyof PianoSettings) {
 		onchange({ ...settings, [key]: !settings[key] });
