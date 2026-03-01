@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { ComposedNote, StaffMode, NoteDuration, NoteDefinition } from '$lib/types/piano';
-	import type { ResolvedPitch } from '$lib/utils/composer-data';
+	import type { ComposedNote, ComposerKey, StaffMode, NoteDuration, NoteDefinition, PitchZone } from '$lib/types/piano';
+	import type { ResolvedPitch, ResolvedNote } from '$lib/utils/composer-data';
 	import {
 		TREBLE_CLEF_PATH,
 		STAFF_LINE_POSITIONS,
@@ -9,7 +9,8 @@
 		DURATION_BEATS,
 		resolveFullStavePitch,
 		resolveThreeLinePitch,
-		resolveOneLinePitch
+		resolveOneLinePitch,
+		keySignaturePositions
 	} from '$lib/utils/composer-data';
 
 	interface Props {
@@ -21,6 +22,9 @@
 		showColours: boolean;
 		activeNote?: NoteDefinition | null;
 		showColour?: boolean;
+		rootNote: ComposerKey;
+		currentThreeLineNotes: Record<PitchZone, ResolvedNote>;
+		currentOneLineNotes: Record<'low' | 'high', ResolvedNote>;
 		onnoteplace: (note: Omit<ComposedNote, 'id' | 'duration'>) => void;
 		onnoteselect: (id: string | null) => void;
 	}
@@ -34,6 +38,9 @@
 		showColours,
 		activeNote = null,
 		showColour = false,
+		rootNote,
+		currentThreeLineNotes,
+		currentOneLineNotes,
 		onnoteplace,
 		onnoteselect
 	}: Props = $props();
@@ -52,7 +59,14 @@
 		return width;
 	});
 
-	let startX = $derived(staffMode === 'full' ? 80 : 45);
+	// Key signature positions for sharp symbols
+	let keySigPositions = $derived(keySignaturePositions(rootNote));
+
+	// Shift startX right to accommodate key signature sharps
+	let startX = $derived(
+		staffMode === 'full' ? 80 + keySigPositions.length * 10 : 45
+	);
+
 	// Extend the viewBox to fit notes, but the staff lines fill edge-to-edge
 	let minWidth = $derived(Math.max(startX + totalNotesWidth + 40, 400));
 	let staffLineEnd = $derived(minWidth);
@@ -61,6 +75,18 @@
 	const THREE_LINE_Y = { high: 60, middle: 85, low: 110 };
 	// One-line mode geometry
 	const ONE_LINE_Y = 85;
+
+	// Dynamic zone labels for simplified modes
+	let threeLineLabels = $derived({
+		high: currentThreeLineNotes.high.noteName,
+		middle: currentThreeLineNotes.middle.noteName,
+		low: currentThreeLineNotes.low.noteName
+	});
+
+	let oneLineLabels = $derived({
+		high: currentOneLineNotes.high.noteName,
+		low: currentOneLineNotes.low.noteName
+	});
 
 	function noteX(index: number): number {
 		let x = startX;
@@ -103,12 +129,12 @@
 		// Resolve pitch from click position
 		let resolved;
 		if (staffMode === 'full') {
-			resolved = resolveFullStavePitch(svgPt.y, bottomLineY, lineSpacing);
+			resolved = resolveFullStavePitch(svgPt.y, bottomLineY, lineSpacing, rootNote);
 			if (!resolved) return;
 		} else if (staffMode === 'three-line') {
-			resolved = resolveThreeLinePitch(svgPt.y, THREE_LINE_Y);
+			resolved = resolveThreeLinePitch(svgPt.y, THREE_LINE_Y, currentThreeLineNotes);
 		} else {
-			resolved = resolveOneLinePitch(svgPt.y, ONE_LINE_Y);
+			resolved = resolveOneLinePitch(svgPt.y, ONE_LINE_Y, currentOneLineNotes);
 		}
 
 		onnoteselect(null);
@@ -217,11 +243,11 @@
 		// Resolve pitch from cursor Y
 		let resolved: ResolvedPitch | null = null;
 		if (staffMode === 'full') {
-			resolved = resolveFullStavePitch(svgPt.y, bottomLineY, lineSpacing);
+			resolved = resolveFullStavePitch(svgPt.y, bottomLineY, lineSpacing, rootNote);
 		} else if (staffMode === 'three-line') {
-			resolved = resolveThreeLinePitch(svgPt.y, THREE_LINE_Y);
+			resolved = resolveThreeLinePitch(svgPt.y, THREE_LINE_Y, currentThreeLineNotes);
 		} else {
-			resolved = resolveOneLinePitch(svgPt.y, ONE_LINE_Y);
+			resolved = resolveOneLinePitch(svgPt.y, ONE_LINE_Y, currentOneLineNotes);
 		}
 		hoverPreview = resolved;
 	}
@@ -285,6 +311,18 @@
 				<path d={TREBLE_CLEF_PATH} fill="#374151" />
 			</g>
 
+			<!-- Key signature sharps -->
+			{#each keySigPositions as pos, i}
+				<text
+					x={72 + i * 10}
+					y={yForStaffPosition(pos) + 4}
+					font-size="12"
+					font-weight="bold"
+					fill="#374151"
+					text-anchor="middle"
+				>#</text>
+			{/each}
+
 			<!-- Staff lines -->
 			{#each STAFF_LINE_POSITIONS as pos}
 				<line
@@ -297,9 +335,9 @@
 				/>
 			{/each}
 		{:else if staffMode === 'three-line'}
-			<!-- Three labelled lines -->
-			{#each [{ zone: 'High', y: THREE_LINE_Y.high }, { zone: 'Mid', y: THREE_LINE_Y.middle }, { zone: 'Low', y: THREE_LINE_Y.low }] as line}
-				<text x="10" y={line.y + 4} font-size="10" fill="#9ca3af" font-weight="500">{line.zone}</text>
+			<!-- Three labelled lines with dynamic note names -->
+			{#each [{ label: threeLineLabels.high, y: THREE_LINE_Y.high }, { label: threeLineLabels.middle, y: THREE_LINE_Y.middle }, { label: threeLineLabels.low, y: THREE_LINE_Y.low }] as line}
+				<text x="10" y={line.y + 4} font-size="10" fill="#9ca3af" font-weight="500">{line.label}</text>
 				<line
 					x1="0"
 					y1={line.y}
@@ -310,9 +348,9 @@
 				/>
 			{/each}
 		{:else}
-			<!-- Single line -->
-			<text x="10" y={ONE_LINE_Y - 18} font-size="10" fill="#9ca3af" font-weight="500">High</text>
-			<text x="10" y={ONE_LINE_Y + 24} font-size="10" fill="#9ca3af" font-weight="500">Low</text>
+			<!-- Single line with dynamic note names -->
+			<text x="10" y={ONE_LINE_Y - 18} font-size="10" fill="#9ca3af" font-weight="500">{oneLineLabels.high}</text>
+			<text x="10" y={ONE_LINE_Y + 24} font-size="10" fill="#9ca3af" font-weight="500">{oneLineLabels.low}</text>
 			<line
 				x1="0"
 				y1={ONE_LINE_Y}

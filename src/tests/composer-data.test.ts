@@ -6,12 +6,23 @@ import {
 	resolveThreeLinePitch,
 	resolveOneLinePitch,
 	shiftPitch,
+	resolveNoteToStaffPitch,
 	DEFAULT_COMPOSER_SETTINGS,
 	STAFF_GEOMETRY,
 	yForStaffPosition,
 	staffModeLabel,
-	TREBLE_CLEF_PATH
+	TREBLE_CLEF_PATH,
+	sharpedNotesForKey,
+	keySignaturePositions,
+	noteAtInterval,
+	threeLineZoneNotes,
+	oneLineZoneNotes,
+	remapNotes,
+	INTERVAL_SEMITONES,
+	CHORD_SEMITONES
 } from '$lib/utils/composer-data';
+import type { ComposedNote } from '$lib/types/piano';
+import { buildNotes } from '$lib/utils/piano-data';
 
 describe('DURATION_BEATS', () => {
 	it('whole note is 4 beats', () => {
@@ -68,6 +79,128 @@ describe('yForStaffPosition', () => {
 
 	it('higher positions produce lower Y values', () => {
 		expect(yForStaffPosition(8)).toBeLessThan(yForStaffPosition(0));
+	});
+});
+
+describe('sharpedNotesForKey', () => {
+	it('C has no sharps', () => {
+		expect(sharpedNotesForKey('C').size).toBe(0);
+	});
+
+	it('G has F sharp', () => {
+		const sharps = sharpedNotesForKey('G');
+		expect(sharps.size).toBe(1);
+		expect(sharps.has('F')).toBe(true);
+	});
+
+	it('D has F and C sharp', () => {
+		const sharps = sharpedNotesForKey('D');
+		expect(sharps.size).toBe(2);
+		expect(sharps.has('F')).toBe(true);
+		expect(sharps.has('C')).toBe(true);
+	});
+
+	it('B has F, C, G, D, A sharp', () => {
+		const sharps = sharpedNotesForKey('B');
+		expect(sharps.size).toBe(5);
+		expect(sharps.has('F')).toBe(true);
+		expect(sharps.has('C')).toBe(true);
+		expect(sharps.has('G')).toBe(true);
+		expect(sharps.has('D')).toBe(true);
+		expect(sharps.has('A')).toBe(true);
+	});
+});
+
+describe('keySignaturePositions', () => {
+	it('C has no key signature positions', () => {
+		expect(keySignaturePositions('C')).toEqual([]);
+	});
+
+	it('G has one sharp at position 8 (F)', () => {
+		expect(keySignaturePositions('G')).toEqual([8]);
+	});
+
+	it('D has two sharps at positions 8 and 5', () => {
+		expect(keySignaturePositions('D')).toEqual([8, 5]);
+	});
+
+	it('B has five sharp positions', () => {
+		expect(keySignaturePositions('B')).toHaveLength(5);
+	});
+});
+
+describe('noteAtInterval', () => {
+	it('C + 0 semitones = C4', () => {
+		const result = noteAtInterval('C', 0);
+		expect(result.noteName).toBe('C4');
+	});
+
+	it('C + 7 semitones = G4', () => {
+		const result = noteAtInterval('C', 7);
+		expect(result.noteName).toBe('G4');
+	});
+
+	it('C + 4 semitones = E4', () => {
+		const result = noteAtInterval('C', 4);
+		expect(result.noteName).toBe('E4');
+	});
+
+	it('D + 4 semitones = F#4', () => {
+		const result = noteAtInterval('D', 4);
+		expect(result.noteName).toBe('F#4');
+	});
+
+	it('C + 12 semitones = C5', () => {
+		const result = noteAtInterval('C', 12);
+		expect(result.noteName).toBe('C5');
+	});
+
+	it('returns valid frequency', () => {
+		const result = noteAtInterval('C', 0);
+		expect(result.frequency).toBeCloseTo(261.63, 0);
+	});
+});
+
+describe('threeLineZoneNotes', () => {
+	it('C major = C4/E4/G4', () => {
+		const notes = threeLineZoneNotes('C', 'major');
+		expect(notes.low.noteName).toBe('C4');
+		expect(notes.middle.noteName).toBe('E4');
+		expect(notes.high.noteName).toBe('G4');
+	});
+
+	it('C minor = C4/D#4/G4', () => {
+		const notes = threeLineZoneNotes('C', 'minor');
+		expect(notes.low.noteName).toBe('C4');
+		expect(notes.middle.noteName).toBe('D#4');
+		expect(notes.high.noteName).toBe('G4');
+	});
+
+	it('G major = G4/B4/D5', () => {
+		const notes = threeLineZoneNotes('G', 'major');
+		expect(notes.low.noteName).toBe('G4');
+		expect(notes.middle.noteName).toBe('B4');
+		expect(notes.high.noteName).toBe('D5');
+	});
+});
+
+describe('oneLineZoneNotes', () => {
+	it('C perfect-5th = C4/G4', () => {
+		const notes = oneLineZoneNotes('C', 'perfect-5th');
+		expect(notes.low.noteName).toBe('C4');
+		expect(notes.high.noteName).toBe('G4');
+	});
+
+	it('D octave = D4/D5', () => {
+		const notes = oneLineZoneNotes('D', 'octave');
+		expect(notes.low.noteName).toBe('D4');
+		expect(notes.high.noteName).toBe('D5');
+	});
+
+	it('C minor-3rd = C4/D#4', () => {
+		const notes = oneLineZoneNotes('C', 'minor-3rd');
+		expect(notes.low.noteName).toBe('C4');
+		expect(notes.high.noteName).toBe('D#4');
 	});
 });
 
@@ -129,6 +262,27 @@ describe('resolveFullStavePitch', () => {
 		const high = resolveFullStavePitch(highY, bottomLineY, lineSpacing);
 		expect(high!.pitchZone).toBe('high');
 	});
+
+	it('applies key signature sharps in G major (F becomes F#)', () => {
+		// F4 is at position 1
+		const y = bottomLineY - lineSpacing / 2;
+		const result = resolveFullStavePitch(y, bottomLineY, lineSpacing, 'G');
+		expect(result).not.toBeNull();
+		expect(result!.noteName).toBe('F#4');
+		expect(result!.staffPosition).toBe(1);
+	});
+
+	it('does not sharp non-affected notes in G major', () => {
+		// E4 at position 0 should remain natural
+		const result = resolveFullStavePitch(bottomLineY, bottomLineY, lineSpacing, 'G');
+		expect(result!.noteName).toBe('E4');
+	});
+
+	it('C major has no sharps (backward compatible)', () => {
+		const y = bottomLineY - lineSpacing / 2;
+		const result = resolveFullStavePitch(y, bottomLineY, lineSpacing, 'C');
+		expect(result!.noteName).toBe('F4');
+	});
 });
 
 describe('resolveThreeLinePitch', () => {
@@ -162,6 +316,13 @@ describe('resolveThreeLinePitch', () => {
 		const result = resolveThreeLinePitch(85, lineYs);
 		expect(result.frequency).toBeGreaterThan(0);
 	});
+
+	it('uses custom zone notes when provided', () => {
+		const zoneNotes = threeLineZoneNotes('G', 'major');
+		const result = resolveThreeLinePitch(108, lineYs, zoneNotes);
+		expect(result.noteName).toBe('G4');
+		expect(result.pitchZone).toBe('low');
+	});
 });
 
 describe('resolveOneLinePitch', () => {
@@ -191,6 +352,13 @@ describe('resolveOneLinePitch', () => {
 		expect(high.frequency).toBeGreaterThan(0);
 		expect(low.frequency).toBeGreaterThan(0);
 		expect(high.frequency).not.toBe(low.frequency);
+	});
+
+	it('uses custom zone notes when provided', () => {
+		const zoneNotes = oneLineZoneNotes('D', 'octave');
+		const result = resolveOneLinePitch(70, lineY, zoneNotes);
+		expect(result.noteName).toBe('D5');
+		expect(result.pitchZone).toBe('high');
 	});
 });
 
@@ -231,6 +399,13 @@ describe('shiftPitch', () => {
 			const result = shiftPitch('full', 0, 'low', 1);
 			expect(result!.frequency).toBeGreaterThan(0);
 		});
+
+		it('applies key signature when shifting in G major', () => {
+			// Shift from E4 (pos 0) up to F#4 (pos 1) in G major
+			const result = shiftPitch('full', 0, 'low', 1, 'G');
+			expect(result).not.toBeNull();
+			expect(result!.noteName).toBe('F#4');
+		});
 	});
 
 	describe('three-line mode', () => {
@@ -261,6 +436,13 @@ describe('shiftPitch', () => {
 			const result = shiftPitch('three-line', 0, 'low', -1);
 			expect(result).toBeNull();
 		});
+
+		it('uses custom zone notes when provided', () => {
+			const zoneNotes = threeLineZoneNotes('G', 'major');
+			const result = shiftPitch('three-line', 0, 'low', 1, 'C', zoneNotes);
+			expect(result).not.toBeNull();
+			expect(result!.noteName).toBe('B4');
+		});
 	});
 
 	describe('one-line mode', () => {
@@ -287,6 +469,174 @@ describe('shiftPitch', () => {
 			const result = shiftPitch('one-line', 0, 'low', -1);
 			expect(result).toBeNull();
 		});
+
+		it('uses custom zone notes when provided', () => {
+			const zoneNotes = oneLineZoneNotes('D', 'octave');
+			const result = shiftPitch('one-line', 0, 'low', 1, 'C', undefined, zoneNotes);
+			expect(result).not.toBeNull();
+			expect(result!.noteName).toBe('D5');
+		});
+	});
+});
+
+describe('resolveNoteToStaffPitch', () => {
+	const allNotes = buildNotes(3, 5);
+	const findNote = (id: string) => allNotes.find((n) => n.id === id)!;
+
+	describe('full stave mode', () => {
+		it('maps C4 to staff position -2', () => {
+			const result = resolveNoteToStaffPitch('full', findNote('C4'));
+			expect(result).not.toBeNull();
+			expect(result!.staffPosition).toBe(-2);
+			expect(result!.noteName).toBe('C4');
+		});
+
+		it('maps G4 to staff position 2', () => {
+			const result = resolveNoteToStaffPitch('full', findNote('G4'));
+			expect(result).not.toBeNull();
+			expect(result!.staffPosition).toBe(2);
+		});
+
+		it('returns null for sharps', () => {
+			const result = resolveNoteToStaffPitch('full', findNote('C#4'));
+			expect(result).toBeNull();
+		});
+
+		it('returns null for notes outside range', () => {
+			const result = resolveNoteToStaffPitch('full', findNote('C3'));
+			expect(result).toBeNull();
+		});
+
+		it('applies key signature sharps in G major', () => {
+			const result = resolveNoteToStaffPitch('full', findNote('F4'), 'G');
+			expect(result).not.toBeNull();
+			expect(result!.noteName).toBe('F#4');
+		});
+	});
+
+	describe('three-line mode', () => {
+		it('maps C4 to low zone', () => {
+			const result = resolveNoteToStaffPitch('three-line', findNote('C4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('low');
+			expect(result!.noteName).toBe('Low');
+		});
+
+		it('maps E4 to middle zone', () => {
+			const result = resolveNoteToStaffPitch('three-line', findNote('E4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('middle');
+			expect(result!.noteName).toBe('Middle');
+		});
+
+		it('maps G4 to high zone', () => {
+			const result = resolveNoteToStaffPitch('three-line', findNote('G4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('high');
+			expect(result!.noteName).toBe('High');
+		});
+
+		it('maps A4 to high zone (nearest to G4)', () => {
+			const result = resolveNoteToStaffPitch('three-line', findNote('A4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('high');
+		});
+
+		it('maps sharps to nearest zone', () => {
+			const result = resolveNoteToStaffPitch('three-line', findNote('C#4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('low');
+		});
+
+		it('uses custom zone notes when provided', () => {
+			const zoneNotes = threeLineZoneNotes('G', 'major');
+			const result = resolveNoteToStaffPitch('three-line', findNote('C4'), 'C', zoneNotes);
+			expect(result).not.toBeNull();
+			expect(result!.noteName).toBe('G4');
+		});
+	});
+
+	describe('one-line mode', () => {
+		it('maps C4 to low zone', () => {
+			const result = resolveNoteToStaffPitch('one-line', findNote('C4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('low');
+			expect(result!.noteName).toBe('Low');
+		});
+
+		it('maps G4 to high zone', () => {
+			const result = resolveNoteToStaffPitch('one-line', findNote('G4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('high');
+			expect(result!.noteName).toBe('High');
+		});
+
+		it('maps E4 to high zone (equidistant, prefers high)', () => {
+			const result = resolveNoteToStaffPitch('one-line', findNote('E4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('high');
+		});
+
+		it('maps D4 to low zone (closer to C4)', () => {
+			const result = resolveNoteToStaffPitch('one-line', findNote('D4'));
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('low');
+		});
+
+		it('uses custom zone notes when provided', () => {
+			const zoneNotes = oneLineZoneNotes('D', 'octave');
+			const result = resolveNoteToStaffPitch('one-line', findNote('G4'), 'C', undefined, zoneNotes);
+			expect(result).not.toBeNull();
+			expect(result!.noteName).toBe('D5');
+		});
+	});
+});
+
+describe('remapNotes', () => {
+	function makeNote(overrides: Partial<ComposedNote>): ComposedNote {
+		return {
+			id: 'test-1',
+			staffPosition: 0,
+			pitchZone: 'low',
+			frequency: 261.63,
+			noteName: 'E4',
+			colour: '#FDD835',
+			duration: 'quarter',
+			...overrides
+		};
+	}
+
+	it('full stave C->G remaps F notes to F#', () => {
+		const notes = [
+			makeNote({ staffPosition: 1, noteName: 'F4' }), // F4 position
+			makeNote({ id: 'test-2', staffPosition: 0, noteName: 'E4' }) // E4 position
+		];
+		const remapped = remapNotes(notes, 'full', 'G', 'major', 'perfect-5th');
+		expect(remapped[0].noteName).toBe('F#4');
+		expect(remapped[1].noteName).toBe('E4'); // E4 unaffected
+	});
+
+	it('three-line major->minor changes middle zone', () => {
+		const notes = [
+			makeNote({ pitchZone: 'middle', noteName: 'E4' })
+		];
+		const remapped = remapNotes(notes, 'three-line', 'C', 'minor', 'perfect-5th');
+		expect(remapped[0].noteName).toBe('D#4'); // Minor 3rd instead of major
+	});
+
+	it('one-line remaps with new interval', () => {
+		const notes = [
+			makeNote({ pitchZone: 'high', noteName: 'G4' })
+		];
+		const remapped = remapNotes(notes, 'one-line', 'C', 'major', 'octave');
+		expect(remapped[0].noteName).toBe('C5'); // Octave above C4
+	});
+
+	it('preserves note id and duration through remap', () => {
+		const notes = [makeNote({ id: 'keep-me', duration: 'half' })];
+		const remapped = remapNotes(notes, 'full', 'C', 'major', 'perfect-5th');
+		expect(remapped[0].id).toBe('keep-me');
+		expect(remapped[0].duration).toBe('half');
 	});
 });
 
@@ -296,6 +646,9 @@ describe('DEFAULT_COMPOSER_SETTINGS', () => {
 		expect(DEFAULT_COMPOSER_SETTINGS.playOnPlace).toBe(true);
 		expect(DEFAULT_COMPOSER_SETTINGS.bpm).toBe(100);
 		expect(DEFAULT_COMPOSER_SETTINGS.selectedDuration).toBe('quarter');
+		expect(DEFAULT_COMPOSER_SETTINGS.rootNote).toBe('C');
+		expect(DEFAULT_COMPOSER_SETTINGS.chordType).toBe('major');
+		expect(DEFAULT_COMPOSER_SETTINGS.interval).toBe('perfect-5th');
 	});
 });
 
@@ -311,5 +664,25 @@ describe('TREBLE_CLEF_PATH', () => {
 	it('is a non-empty string starting with M', () => {
 		expect(TREBLE_CLEF_PATH.length).toBeGreaterThan(0);
 		expect(TREBLE_CLEF_PATH.startsWith('M')).toBe(true);
+	});
+});
+
+describe('INTERVAL_SEMITONES', () => {
+	it('has correct semitone values', () => {
+		expect(INTERVAL_SEMITONES['minor-3rd']).toBe(3);
+		expect(INTERVAL_SEMITONES['major-3rd']).toBe(4);
+		expect(INTERVAL_SEMITONES['perfect-4th']).toBe(5);
+		expect(INTERVAL_SEMITONES['perfect-5th']).toBe(7);
+		expect(INTERVAL_SEMITONES['octave']).toBe(12);
+	});
+});
+
+describe('CHORD_SEMITONES', () => {
+	it('major chord is [4, 7]', () => {
+		expect(CHORD_SEMITONES.major).toEqual([4, 7]);
+	});
+
+	it('minor chord is [3, 7]', () => {
+		expect(CHORD_SEMITONES.minor).toEqual([3, 7]);
 	});
 });

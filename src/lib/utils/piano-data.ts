@@ -25,12 +25,12 @@ const A4_FREQ = 440;
 const A4_MIDI = 69;
 
 /** Calculate frequency from MIDI note number */
-function midiToFrequency(midi: number): number {
+export function midiToFrequency(midi: number): number {
 	return A4_FREQ * Math.pow(2, (midi - A4_MIDI) / 12);
 }
 
 /** MIDI note number from note name + octave */
-function noteToMidi(name: NoteName, accidental: Accidental, octave: number): number {
+export function noteToMidi(name: NoteName, accidental: Accidental, octave: number): number {
 	const semitones: Record<NoteName, number> = {
 		C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11
 	};

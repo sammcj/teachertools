@@ -1,6 +1,16 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import type { ComposedNote, ComposerSettings, StaffMode, NoteDuration, Waveform, NoteDefinition, PitchZone } from '$lib/types/piano';
+	import type {
+		ComposedNote,
+		ComposerKey,
+		ComposerSettings,
+		ChordType,
+		IntervalType,
+		StaffMode,
+		NoteDuration,
+		Waveform,
+		NoteDefinition
+	} from '$lib/types/piano';
 	import type { ResolvedPitch } from '$lib/utils/composer-data';
 	import {
 		DEFAULT_COMPOSER_SETTINGS,
@@ -8,7 +18,12 @@
 		saveComposerSettings,
 		staffModeLabel,
 		durationMs,
-		shiftPitch
+		shiftPitch,
+		resolveNoteToStaffPitch,
+		remapNotes,
+		threeLineZoneNotes,
+		oneLineZoneNotes,
+		INTERVAL_LABELS
 	} from '$lib/utils/composer-data';
 	import { playNoteForDuration, ensureAudioContext } from '$lib/utils/audio';
 	import { playSequence } from '$lib/utils/playback';
@@ -29,28 +44,79 @@
 	let { waveform, showColours, soundEnabled, activeNote = null, pianoNoteEvent = null }: Props = $props();
 
 	let composerSettings = $state<ComposerSettings>(loadComposerSettings());
-	let composedNotes = $state<ComposedNote[]>([]);
+
+	// Per-mode note storage: switching modes preserves notes
+	let notesByMode = $state<Record<StaffMode, ComposedNote[]>>({
+		full: [], 'three-line': [], 'one-line': []
+	});
+	let composedNotes = $derived(notesByMode[composerSettings.staffMode]);
+
 	let selectedNoteId = $state<string | null>(null);
 	let isPlaying = $state(false);
 	let currentPlaybackIndex = $state(-1);
 	let abortPlayback: (() => void) | null = null;
 
 	const staffModes: StaffMode[] = ['full', 'three-line', 'one-line'];
+	const composerKeys: ComposerKey[] = ['C', 'G', 'D', 'A', 'E', 'B'];
+	const chordTypes: ChordType[] = ['major', 'minor'];
+	const intervalTypes: IntervalType[] = ['minor-3rd', 'major-3rd', 'perfect-4th', 'perfect-5th', 'octave'];
+
+	// Derived zone notes for simplified modes
+	let currentThreeLineNotes = $derived(threeLineZoneNotes(composerSettings.rootNote, composerSettings.chordType));
+	let currentOneLineNotes = $derived(oneLineZoneNotes(composerSettings.rootNote, composerSettings.interval));
 
 	function persistSettings() {
 		saveComposerSettings(composerSettings);
 	}
 
+	function currentMode(): StaffMode {
+		return composerSettings.staffMode;
+	}
+
+	function updateCurrentModeNotes(notes: ComposedNote[]) {
+		notesByMode = { ...notesByMode, [currentMode()]: notes };
+	}
+
 	function setStaffMode(mode: StaffMode) {
 		if (mode === composerSettings.staffMode) return;
-		if (composedNotes.length > 0) {
-			// Different pitch systems are incompatible - confirm clearing
-			if (!confirm('Changing staff mode will clear all placed notes. Continue?')) return;
-			composedNotes = [];
-			selectedNoteId = null;
-		}
+		selectedNoteId = null;
 		composerSettings = { ...composerSettings, staffMode: mode };
 		persistSettings();
+	}
+
+	function setRootNote(key: ComposerKey) {
+		if (key === composerSettings.rootNote) return;
+		composerSettings = { ...composerSettings, rootNote: key };
+		persistSettings();
+		remapCurrentNotes();
+	}
+
+	function setChordType(chord: ChordType) {
+		if (chord === composerSettings.chordType) return;
+		composerSettings = { ...composerSettings, chordType: chord };
+		persistSettings();
+		remapCurrentNotes();
+	}
+
+	function setInterval(interval: IntervalType) {
+		if (interval === composerSettings.interval) return;
+		composerSettings = { ...composerSettings, interval };
+		persistSettings();
+		remapCurrentNotes();
+	}
+
+	function remapCurrentNotes() {
+		const mode = currentMode();
+		const current = notesByMode[mode];
+		if (current.length === 0) return;
+		const remapped = remapNotes(
+			current,
+			mode,
+			composerSettings.rootNote,
+			composerSettings.chordType,
+			composerSettings.interval
+		);
+		notesByMode = { ...notesByMode, [mode]: remapped };
 	}
 
 	function setDuration(duration: NoteDuration) {
@@ -78,7 +144,7 @@
 			colour: resolved.colour,
 			duration: composerSettings.selectedDuration
 		};
-		composedNotes = [...composedNotes, note];
+		updateCurrentModeNotes([...composedNotes, note]);
 
 		if (composerSettings.playOnPlace && soundEnabled) {
 			ensureAudioContext();
@@ -93,14 +159,14 @@
 
 	function deleteSelected() {
 		if (!selectedNoteId) return;
-		composedNotes = composedNotes.filter((n) => n.id !== selectedNoteId);
+		updateCurrentModeNotes(composedNotes.filter((n) => n.id !== selectedNoteId));
 		selectedNoteId = null;
 	}
 
 	function clearAll() {
 		if (composedNotes.length === 0) return;
 		if (!confirm('Clear all notes?')) return;
-		composedNotes = [];
+		updateCurrentModeNotes([]);
 		selectedNoteId = null;
 	}
 
@@ -139,11 +205,14 @@
 			composerSettings.staffMode,
 			note.staffPosition,
 			note.pitchZone,
-			direction
+			direction,
+			composerSettings.rootNote,
+			currentThreeLineNotes,
+			currentOneLineNotes
 		);
 		if (!newPitch) return;
 
-		composedNotes = composedNotes.map((n, i) =>
+		updateCurrentModeNotes(composedNotes.map((n, i) =>
 			i === noteIndex
 				? {
 						...n,
@@ -154,7 +223,7 @@
 						colour: newPitch.colour
 					}
 				: n
-		);
+		));
 
 		if (composerSettings.playOnPlace && soundEnabled) {
 			ensureAudioContext();
@@ -185,28 +254,31 @@
 	// When a piano key is played while a note is selected, update its pitch
 	function applyPianoNoteToSelected(pianoNote: NoteDefinition) {
 		if (!selectedNoteId) return;
-		if (composerSettings.staffMode !== 'full') return;
-		if (pianoNote.accidental !== '') return;
-
-		const pos = pianoNote.staffPosition;
-		if (pos < -2 || pos > 11) return;
 
 		const noteIdx = composedNotes.findIndex((n) => n.id === selectedNoteId);
 		if (noteIdx === -1) return;
 
-		const zone: PitchZone = pos <= 2 ? 'low' : pos <= 6 ? 'middle' : 'high';
-		composedNotes = composedNotes.map((n, i) =>
+		const resolved = resolveNoteToStaffPitch(
+			composerSettings.staffMode,
+			pianoNote,
+			composerSettings.rootNote,
+			currentThreeLineNotes,
+			currentOneLineNotes
+		);
+		if (!resolved) return;
+
+		updateCurrentModeNotes(composedNotes.map((n, i) =>
 			i === noteIdx
 				? {
 						...n,
-						staffPosition: pos,
-						pitchZone: zone,
-						frequency: pianoNote.frequency,
-						noteName: `${pianoNote.name}${pianoNote.octave}`,
-						colour: pianoNote.colour
+						staffPosition: resolved.staffPosition,
+						pitchZone: resolved.pitchZone,
+						frequency: resolved.frequency,
+						noteName: resolved.noteName,
+						colour: resolved.colour
 					}
 				: n
-		);
+		));
 	}
 
 	let lastHandledPianoEvent: typeof pianoNoteEvent = null;
@@ -235,6 +307,49 @@
 				</button>
 			{/each}
 		</div>
+
+		<div class="toolbar-separator"></div>
+
+		<!-- Key selector -->
+		<div class="toolbar-group">
+			{#each composerKeys as key}
+				<button
+					class="mode-btn"
+					class:active={composerSettings.rootNote === key}
+					onclick={() => setRootNote(key)}
+				>
+					{key}
+				</button>
+			{/each}
+		</div>
+
+		<!-- Chord type (three-line only) -->
+		{#if composerSettings.staffMode === 'three-line'}
+			<div class="toolbar-group">
+				{#each chordTypes as chord}
+					<button
+						class="mode-btn"
+						class:active={composerSettings.chordType === chord}
+						onclick={() => setChordType(chord)}
+					>
+						{chord.charAt(0).toUpperCase() + chord.slice(1)}
+					</button>
+				{/each}
+			</div>
+		{/if}
+
+		<!-- Interval selector (one-line only) -->
+		{#if composerSettings.staffMode === 'one-line'}
+			<select
+				class="toolbar-select"
+				value={composerSettings.interval}
+				onchange={(e) => setInterval(e.currentTarget.value as IntervalType)}
+			>
+				{#each intervalTypes as iv}
+					<option value={iv}>{INTERVAL_LABELS[iv]}</option>
+				{/each}
+			</select>
+		{/if}
 
 		<div class="toolbar-separator"></div>
 
@@ -300,6 +415,9 @@
 		{showColours}
 		{activeNote}
 		showColour={showColours}
+		rootNote={composerSettings.rootNote}
+		{currentThreeLineNotes}
+		{currentOneLineNotes}
 		onnoteplace={handleNotePlace}
 		onnoteselect={handleNoteSelect}
 	/>
@@ -380,6 +498,17 @@
 		width: 1px;
 		height: 1.5rem;
 		background: var(--color-border);
+	}
+
+	.toolbar-select {
+		padding: 0.25rem 0.5rem;
+		font-size: 0.6875rem;
+		font-weight: 500;
+		border: 1px solid var(--color-border);
+		border-radius: 0.375rem;
+		background: var(--color-surface);
+		color: var(--color-text-secondary);
+		cursor: pointer;
 	}
 
 	.flex-spacer {

@@ -36,6 +36,9 @@ export interface NoteHandle {
 export type StaffMode = 'full' | 'three-line' | 'one-line';
 export type NoteDuration = 'whole' | 'half' | 'quarter' | 'eighth';
 export type PitchZone = 'low' | 'middle' | 'high';
+export type ComposerKey = 'C' | 'G' | 'D' | 'A' | 'E' | 'B';
+export type ChordType = 'major' | 'minor';
+export type IntervalType = 'minor-3rd' | 'major-3rd' | 'perfect-4th' | 'perfect-5th' | 'octave';
 
 export interface ComposedNote {
 	id: string;
@@ -52,4 +55,7 @@ export interface ComposerSettings {
 	playOnPlace: boolean;
 	bpm: number;
 	selectedDuration: NoteDuration;
+	rootNote: ComposerKey;
+	chordType: ChordType;
+	interval: IntervalType;
 }

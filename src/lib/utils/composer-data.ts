@@ -1,5 +1,16 @@
-import type { ComposerSettings, NoteDuration, PitchZone, StaffMode } from '$lib/types/piano';
-import { buildNotes, NOTE_COLOURS } from '$lib/utils/piano-data';
+import type {
+	ComposedNote,
+	ComposerKey,
+	ComposerSettings,
+	ChordType,
+	IntervalType,
+	NoteDefinition,
+	NoteDuration,
+	NoteName,
+	PitchZone,
+	StaffMode
+} from '$lib/types/piano';
+import { buildNotes, NOTE_COLOURS, noteToMidi, midiToFrequency } from '$lib/utils/piano-data';
 
 /** Beats per duration (quarter note = 1 beat) */
 export const DURATION_BEATS: Record<NoteDuration, number> = {
@@ -18,18 +29,120 @@ export function durationMs(duration: NoteDuration, bpm: number): number {
 /** Natural notes in octaves 4-5 for the full stave pitch table */
 const FULL_STAVE_NOTES = buildNotes(4, 5).filter((n) => n.accidental === '');
 
-/** Three-line mode pitch mapping: low=C4, middle=E4, high=G4 */
-const THREE_LINE_NOTES = {
-	low: FULL_STAVE_NOTES.find((n) => n.id === 'C4')!,
-	middle: FULL_STAVE_NOTES.find((n) => n.id === 'E4')!,
-	high: FULL_STAVE_NOTES.find((n) => n.id === 'G4')!
+// ── Key signature data ──
+
+const SHARP_ORDER: NoteName[] = ['F', 'C', 'G', 'D', 'A'];
+const KEY_SHARP_COUNT: Record<ComposerKey, number> = {
+	C: 0, G: 1, D: 2, A: 3, E: 4, B: 5
 };
 
-/** One-line mode pitch mapping: low=C4, high=G4 */
-const ONE_LINE_NOTES = {
-	low: FULL_STAVE_NOTES.find((n) => n.id === 'C4')!,
-	high: FULL_STAVE_NOTES.find((n) => n.id === 'G4')!
+/** Returns which note names get sharps for a given key */
+export function sharpedNotesForKey(key: ComposerKey): Set<NoteName> {
+	const count = KEY_SHARP_COUNT[key];
+	return new Set(SHARP_ORDER.slice(0, count));
+}
+
+/**
+ * Staff positions where sharp symbols should render in the key signature.
+ * Conventional treble clef sharp positions: F#=8, C#=5, G#=9, D#=6, A#=3
+ */
+const KEY_SIG_STAFF_POSITIONS: number[] = [8, 5, 9, 6, 3];
+
+export function keySignaturePositions(key: ComposerKey): number[] {
+	const count = KEY_SHARP_COUNT[key];
+	return KEY_SIG_STAFF_POSITIONS.slice(0, count);
+}
+
+// ── Interval / chord data ──
+
+export const INTERVAL_SEMITONES: Record<IntervalType, number> = {
+	'minor-3rd': 3,
+	'major-3rd': 4,
+	'perfect-4th': 5,
+	'perfect-5th': 7,
+	octave: 12
 };
+
+export const INTERVAL_LABELS: Record<IntervalType, string> = {
+	'minor-3rd': 'Minor 3rd',
+	'major-3rd': 'Major 3rd',
+	'perfect-4th': 'Perfect 4th',
+	'perfect-5th': 'Perfect 5th',
+	octave: 'Octave'
+};
+
+export const CHORD_SEMITONES: Record<ChordType, [number, number]> = {
+	major: [4, 7],
+	minor: [3, 7]
+};
+
+// ── Dynamic zone note computation ──
+
+/** Chromatic note names starting from C for lookup by semitone offset */
+const CHROMATIC_NAMES: { name: NoteName; sharp: boolean }[] = [
+	{ name: 'C', sharp: false },
+	{ name: 'C', sharp: true },
+	{ name: 'D', sharp: false },
+	{ name: 'D', sharp: true },
+	{ name: 'E', sharp: false },
+	{ name: 'F', sharp: false },
+	{ name: 'F', sharp: true },
+	{ name: 'G', sharp: false },
+	{ name: 'G', sharp: true },
+	{ name: 'A', sharp: false },
+	{ name: 'A', sharp: true },
+	{ name: 'B', sharp: false }
+];
+
+export interface ResolvedNote {
+	frequency: number;
+	noteName: string;
+	colour: string;
+}
+
+/** Compute the note at a given semitone offset from a root in octave 4 */
+export function noteAtInterval(root: NoteName, semitones: number): ResolvedNote {
+	const rootMidi = noteToMidi(root, '', 4);
+	const targetMidi = rootMidi + semitones;
+	const frequency = midiToFrequency(targetMidi);
+
+	// Work out which chromatic note and octave this lands on
+	const semitoneInOctave = ((targetMidi % 12) + 12) % 12;
+	const octave = Math.floor(targetMidi / 12) - 1;
+	const chromatic = CHROMATIC_NAMES[semitoneInOctave];
+	const displayName = chromatic.sharp
+		? `${chromatic.name}#${octave}`
+		: `${chromatic.name}${octave}`;
+	const colour = NOTE_COLOURS[chromatic.name];
+
+	return { frequency, noteName: displayName, colour };
+}
+
+/** Compute the three zone notes for three-line mode */
+export function threeLineZoneNotes(
+	root: ComposerKey,
+	chordType: ChordType
+): Record<PitchZone, ResolvedNote> {
+	const [thirdSemitones, fifthSemitones] = CHORD_SEMITONES[chordType];
+	return {
+		low: noteAtInterval(root, 0),
+		middle: noteAtInterval(root, thirdSemitones),
+		high: noteAtInterval(root, fifthSemitones)
+	};
+}
+
+/** Compute the two zone notes for one-line mode */
+export function oneLineZoneNotes(
+	root: ComposerKey,
+	interval: IntervalType
+): Record<'low' | 'high', ResolvedNote> {
+	return {
+		low: noteAtInterval(root, 0),
+		high: noteAtInterval(root, INTERVAL_SEMITONES[interval])
+	};
+}
+
+// ── Resolve functions ──
 
 export interface ResolvedPitch {
 	staffPosition: number;
@@ -41,25 +154,36 @@ export interface ResolvedPitch {
 
 /**
  * Resolve a click Y position to a diatonic staff position on a full 5-line stave.
- * Returns null if the click is too far outside the staff range.
+ * When a key is provided, sharped notes get their sharp frequency/name.
  */
 export function resolveFullStavePitch(
 	clickY: number,
 	bottomLineY: number,
-	lineSpacing: number
+	lineSpacing: number,
+	key: ComposerKey = 'C'
 ): ResolvedPitch | null {
-	// Staff position = (bottomLineY - clickY) / (lineSpacing / 2), rounded to nearest integer
 	const halfSpace = lineSpacing / 2;
 	const rawPosition = (bottomLineY - clickY) / halfSpace;
 	const snapped = Math.round(rawPosition);
 
-	// Allow range from C4 (position -2) to G5 (position 12)
 	if (snapped < -2 || snapped > 12) return null;
 
 	const note = FULL_STAVE_NOTES.find((n) => n.staffPosition === snapped);
 	if (!note) return null;
 
 	const zone: PitchZone = snapped <= 2 ? 'low' : snapped <= 6 ? 'middle' : 'high';
+	const sharps = sharpedNotesForKey(key);
+
+	if (sharps.has(note.name)) {
+		const sharpMidi = noteToMidi(note.name, '#', note.octave);
+		return {
+			staffPosition: snapped,
+			pitchZone: zone,
+			frequency: midiToFrequency(sharpMidi),
+			noteName: `${note.name}#${note.octave}`,
+			colour: NOTE_COLOURS[note.name]
+		};
+	}
 
 	return {
 		staffPosition: snapped,
@@ -72,10 +196,12 @@ export function resolveFullStavePitch(
 
 /**
  * Resolve a click Y to the nearest of 3 lines (low/middle/high).
+ * Uses provided zone notes for pitch data.
  */
 export function resolveThreeLinePitch(
 	clickY: number,
-	lineYs: { low: number; middle: number; high: number }
+	lineYs: { low: number; middle: number; high: number },
+	zoneNotes?: Record<PitchZone, ResolvedNote>
 ): ResolvedPitch {
 	const distances = {
 		low: Math.abs(clickY - lineYs.low),
@@ -87,7 +213,24 @@ export function resolveThreeLinePitch(
 	if (distances.middle < distances[nearest]) nearest = 'middle';
 	if (distances.high < distances[nearest]) nearest = 'high';
 
-	const note = THREE_LINE_NOTES[nearest];
+	if (zoneNotes) {
+		const resolved = zoneNotes[nearest];
+		return {
+			staffPosition: nearest === 'low' ? 0 : nearest === 'middle' ? 1 : 2,
+			pitchZone: nearest,
+			frequency: resolved.frequency,
+			noteName: resolved.noteName,
+			colour: resolved.colour
+		};
+	}
+
+	// Backward-compatible fallback: C major triad
+	const fallbackNotes = {
+		low: FULL_STAVE_NOTES.find((n) => n.id === 'C4')!,
+		middle: FULL_STAVE_NOTES.find((n) => n.id === 'E4')!,
+		high: FULL_STAVE_NOTES.find((n) => n.id === 'G4')!
+	};
+	const note = fallbackNotes[nearest];
 	return {
 		staffPosition: nearest === 'low' ? 0 : nearest === 'middle' ? 1 : 2,
 		pitchZone: nearest,
@@ -99,13 +242,32 @@ export function resolveThreeLinePitch(
 
 /**
  * Resolve a click Y to above (high) or below (low) a single line.
+ * Uses provided zone notes for pitch data.
  */
 export function resolveOneLinePitch(
 	clickY: number,
-	lineY: number
+	lineY: number,
+	zoneNotes?: Record<'low' | 'high', ResolvedNote>
 ): ResolvedPitch {
 	const zone: PitchZone = clickY < lineY ? 'high' : 'low';
-	const note = ONE_LINE_NOTES[zone];
+
+	if (zoneNotes) {
+		const resolved = zoneNotes[zone];
+		return {
+			staffPosition: zone === 'low' ? 0 : 1,
+			pitchZone: zone,
+			frequency: resolved.frequency,
+			noteName: resolved.noteName,
+			colour: resolved.colour
+		};
+	}
+
+	// Backward-compatible fallback: C4/G4
+	const fallbackNotes = {
+		low: FULL_STAVE_NOTES.find((n) => n.id === 'C4')!,
+		high: FULL_STAVE_NOTES.find((n) => n.id === 'G4')!
+	};
+	const note = fallbackNotes[zone];
 	return {
 		staffPosition: zone === 'low' ? 0 : 1,
 		pitchZone: zone,
@@ -123,13 +285,29 @@ export function shiftPitch(
 	staffMode: StaffMode,
 	currentPosition: number,
 	currentZone: PitchZone,
-	direction: 1 | -1
+	direction: 1 | -1,
+	key: ComposerKey = 'C',
+	threeLineNotes?: Record<PitchZone, ResolvedNote>,
+	oneLineNotes?: Record<'low' | 'high', ResolvedNote>
 ): ResolvedPitch | null {
 	if (staffMode === 'full') {
 		const newPosition = currentPosition + direction;
 		const note = FULL_STAVE_NOTES.find((n) => n.staffPosition === newPosition);
 		if (!note) return null;
 		const zone: PitchZone = newPosition <= 2 ? 'low' : newPosition <= 6 ? 'middle' : 'high';
+		const sharps = sharpedNotesForKey(key);
+
+		if (sharps.has(note.name)) {
+			const sharpMidi = noteToMidi(note.name, '#', note.octave);
+			return {
+				staffPosition: newPosition,
+				pitchZone: zone,
+				frequency: midiToFrequency(sharpMidi),
+				noteName: `${note.name}#${note.octave}`,
+				colour: NOTE_COLOURS[note.name]
+			};
+		}
+
 		return {
 			staffPosition: newPosition,
 			pitchZone: zone,
@@ -143,7 +321,25 @@ export function shiftPitch(
 		const newIdx = idx + direction;
 		if (newIdx < 0 || newIdx > 2) return null;
 		const zone = zones[newIdx];
-		const note = THREE_LINE_NOTES[zone];
+
+		if (threeLineNotes) {
+			const resolved = threeLineNotes[zone];
+			return {
+				staffPosition: newIdx,
+				pitchZone: zone,
+				frequency: resolved.frequency,
+				noteName: resolved.noteName,
+				colour: resolved.colour
+			};
+		}
+
+		// Fallback: C major triad
+		const fallbackNotes: Record<PitchZone, NoteDefinition> = {
+			low: FULL_STAVE_NOTES.find((n) => n.id === 'C4')!,
+			middle: FULL_STAVE_NOTES.find((n) => n.id === 'E4')!,
+			high: FULL_STAVE_NOTES.find((n) => n.id === 'G4')!
+		};
+		const note = fallbackNotes[zone];
 		return {
 			staffPosition: newIdx,
 			pitchZone: zone,
@@ -153,25 +349,216 @@ export function shiftPitch(
 		};
 	} else {
 		if (direction === 1 && currentZone === 'low') {
+			const resolved = oneLineNotes?.high;
+			if (resolved) {
+				return {
+					staffPosition: 1,
+					pitchZone: 'high',
+					frequency: resolved.frequency,
+					noteName: resolved.noteName,
+					colour: resolved.colour
+				};
+			}
+			const fallback = FULL_STAVE_NOTES.find((n) => n.id === 'G4')!;
 			return {
 				staffPosition: 1,
 				pitchZone: 'high',
-				frequency: ONE_LINE_NOTES.high.frequency,
+				frequency: fallback.frequency,
 				noteName: 'High',
-				colour: NOTE_COLOURS[ONE_LINE_NOTES.high.name]
+				colour: NOTE_COLOURS[fallback.name]
 			};
 		}
 		if (direction === -1 && currentZone === 'high') {
+			const resolved = oneLineNotes?.low;
+			if (resolved) {
+				return {
+					staffPosition: 0,
+					pitchZone: 'low',
+					frequency: resolved.frequency,
+					noteName: resolved.noteName,
+					colour: resolved.colour
+				};
+			}
+			const fallback = FULL_STAVE_NOTES.find((n) => n.id === 'C4')!;
 			return {
 				staffPosition: 0,
 				pitchZone: 'low',
-				frequency: ONE_LINE_NOTES.low.frequency,
+				frequency: fallback.frequency,
 				noteName: 'Low',
-				colour: NOTE_COLOURS[ONE_LINE_NOTES.low.name]
+				colour: NOTE_COLOURS[fallback.name]
 			};
 		}
 		return null;
 	}
+}
+
+/**
+ * Map a piano NoteDefinition to a ResolvedPitch for the given staff mode.
+ */
+export function resolveNoteToStaffPitch(
+	staffMode: StaffMode,
+	note: NoteDefinition,
+	key: ComposerKey = 'C',
+	threeLineNotes?: Record<PitchZone, ResolvedNote>,
+	oneLineNotes?: Record<'low' | 'high', ResolvedNote>
+): ResolvedPitch | null {
+	const pos = note.staffPosition;
+
+	if (staffMode === 'full') {
+		if (note.accidental !== '') return null;
+		if (pos < -2 || pos > 11) return null;
+		const zone: PitchZone = pos <= 2 ? 'low' : pos <= 6 ? 'middle' : 'high';
+		const sharps = sharpedNotesForKey(key);
+
+		if (sharps.has(note.name)) {
+			const sharpMidi = noteToMidi(note.name, '#', note.octave);
+			return {
+				staffPosition: pos,
+				pitchZone: zone,
+				frequency: midiToFrequency(sharpMidi),
+				noteName: `${note.name}#${note.octave}`,
+				colour: NOTE_COLOURS[note.name]
+			};
+		}
+
+		return {
+			staffPosition: pos,
+			pitchZone: zone,
+			frequency: note.frequency,
+			noteName: `${note.name}${note.octave}`,
+			colour: NOTE_COLOURS[note.name]
+		};
+	}
+
+	if (staffMode === 'three-line') {
+		const anchors: { zone: PitchZone; pos: number }[] = [
+			{ zone: 'low', pos: -2 },
+			{ zone: 'middle', pos: 0 },
+			{ zone: 'high', pos: 2 }
+		];
+		let nearest = anchors[0];
+		for (const a of anchors) {
+			if (Math.abs(pos - a.pos) < Math.abs(pos - nearest.pos)) nearest = a;
+		}
+
+		if (threeLineNotes) {
+			const resolved = threeLineNotes[nearest.zone];
+			return {
+				staffPosition: nearest.zone === 'low' ? 0 : nearest.zone === 'middle' ? 1 : 2,
+				pitchZone: nearest.zone,
+				frequency: resolved.frequency,
+				noteName: resolved.noteName,
+				colour: resolved.colour
+			};
+		}
+
+		// Fallback
+		const fallbackNotes: Record<PitchZone, NoteDefinition> = {
+			low: FULL_STAVE_NOTES.find((n) => n.id === 'C4')!,
+			middle: FULL_STAVE_NOTES.find((n) => n.id === 'E4')!,
+			high: FULL_STAVE_NOTES.find((n) => n.id === 'G4')!
+		};
+		const zoneNote = fallbackNotes[nearest.zone];
+		return {
+			staffPosition: nearest.zone === 'low' ? 0 : nearest.zone === 'middle' ? 1 : 2,
+			pitchZone: nearest.zone,
+			frequency: zoneNote.frequency,
+			noteName: nearest.zone.charAt(0).toUpperCase() + nearest.zone.slice(1),
+			colour: NOTE_COLOURS[zoneNote.name]
+		};
+	}
+
+	// One-line: snap to nearest of C4(pos -2) or G4(pos 2)
+	const zone: PitchZone = Math.abs(pos - 2) <= Math.abs(pos - (-2)) ? 'high' : 'low';
+
+	if (oneLineNotes) {
+		const resolved = oneLineNotes[zone];
+		return {
+			staffPosition: zone === 'low' ? 0 : 1,
+			pitchZone: zone,
+			frequency: resolved.frequency,
+			noteName: resolved.noteName,
+			colour: resolved.colour
+		};
+	}
+
+	// Fallback
+	const fallbackNotes = {
+		low: FULL_STAVE_NOTES.find((n) => n.id === 'C4')!,
+		high: FULL_STAVE_NOTES.find((n) => n.id === 'G4')!
+	};
+	const zoneNote = fallbackNotes[zone];
+	return {
+		staffPosition: zone === 'low' ? 0 : 1,
+		pitchZone: zone,
+		frequency: zoneNote.frequency,
+		noteName: zone === 'low' ? 'Low' : 'High',
+		colour: NOTE_COLOURS[zoneNote.name]
+	};
+}
+
+/**
+ * Remap existing notes to new pitches based on current settings.
+ * Full stave: re-resolves each staffPosition with new key signature.
+ * Three-line / one-line: re-resolves each pitchZone with new zone notes.
+ */
+export function remapNotes(
+	notes: ComposedNote[],
+	staffMode: StaffMode,
+	key: ComposerKey,
+	chordType: ChordType,
+	interval: IntervalType
+): ComposedNote[] {
+	if (staffMode === 'full') {
+		const sharps = sharpedNotesForKey(key);
+		return notes.map((n) => {
+			const staveNote = FULL_STAVE_NOTES.find((sn) => sn.staffPosition === n.staffPosition);
+			if (!staveNote) return n;
+
+			if (sharps.has(staveNote.name)) {
+				const sharpMidi = noteToMidi(staveNote.name, '#', staveNote.octave);
+				return {
+					...n,
+					frequency: midiToFrequency(sharpMidi),
+					noteName: `${staveNote.name}#${staveNote.octave}`,
+					colour: NOTE_COLOURS[staveNote.name]
+				};
+			}
+
+			return {
+				...n,
+				frequency: staveNote.frequency,
+				noteName: `${staveNote.name}${staveNote.octave}`,
+				colour: NOTE_COLOURS[staveNote.name]
+			};
+		});
+	}
+
+	if (staffMode === 'three-line') {
+		const zoneNotes = threeLineZoneNotes(key, chordType);
+		return notes.map((n) => {
+			const resolved = zoneNotes[n.pitchZone];
+			return {
+				...n,
+				frequency: resolved.frequency,
+				noteName: resolved.noteName,
+				colour: resolved.colour
+			};
+		});
+	}
+
+	// one-line
+	const zoneNotes = oneLineZoneNotes(key, interval);
+	return notes.map((n) => {
+		const zone = n.pitchZone as 'low' | 'high';
+		const resolved = zoneNotes[zone] ?? zoneNotes.low;
+		return {
+			...n,
+			frequency: resolved.frequency,
+			noteName: resolved.noteName,
+			colour: resolved.colour
+		};
+	});
 }
 
 /** Default composer settings */
@@ -179,7 +566,10 @@ export const DEFAULT_COMPOSER_SETTINGS: ComposerSettings = {
 	staffMode: 'full',
 	playOnPlace: true,
 	bpm: 100,
-	selectedDuration: 'quarter'
+	selectedDuration: 'quarter',
+	rootNote: 'C',
+	chordType: 'major',
+	interval: 'perfect-5th'
 };
 
 const COMPOSER_SETTINGS_KEY = 'piano_composer_settings';
