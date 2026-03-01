@@ -10,6 +10,7 @@
 	let settings = $state<PianoSettings>(loadSettings());
 	let activeNotes = $state(new Set<string>());
 	let lastActiveNote = $state<NoteDefinition | null>(null);
+	let pianoNoteEvent = $state<{ note: NoteDefinition } | null>(null);
 
 	let notes = $derived(getNotesForRange(settings.octaveRange));
 	let noteMap = $derived(new Map(notes.map((n) => [n.id, n])));
@@ -25,6 +26,7 @@
 
 		activeNotes = new Set([...activeNotes, noteId]);
 		lastActiveNote = note;
+		pianoNoteEvent = { note };
 
 		if (settings.soundEnabled) {
 			ensureAudioContext();
@@ -112,6 +114,7 @@
 			showColours={settings.showColours}
 			soundEnabled={settings.soundEnabled}
 			activeNote={lastActiveNote}
+			{pianoNoteEvent}
 		/>
 	</div>
 

@@ -1,12 +1,14 @@
 <script lang="ts">
-	import type { ComposedNote, ComposerSettings, StaffMode, NoteDuration, Waveform, NoteDefinition } from '$lib/types/piano';
+	import { untrack } from 'svelte';
+	import type { ComposedNote, ComposerSettings, StaffMode, NoteDuration, Waveform, NoteDefinition, PitchZone } from '$lib/types/piano';
 	import type { ResolvedPitch } from '$lib/utils/composer-data';
 	import {
 		DEFAULT_COMPOSER_SETTINGS,
 		loadComposerSettings,
 		saveComposerSettings,
 		staffModeLabel,
-		durationMs
+		durationMs,
+		shiftPitch
 	} from '$lib/utils/composer-data';
 	import { playNoteForDuration, ensureAudioContext } from '$lib/utils/audio';
 	import { playSequence } from '$lib/utils/playback';
@@ -21,9 +23,10 @@
 		showColours: boolean;
 		soundEnabled: boolean;
 		activeNote?: NoteDefinition | null;
+		pianoNoteEvent?: { note: NoteDefinition } | null;
 	}
 
-	let { waveform, showColours, soundEnabled, activeNote = null }: Props = $props();
+	let { waveform, showColours, soundEnabled, activeNote = null, pianoNoteEvent = null }: Props = $props();
 
 	let composerSettings = $state<ComposerSettings>(loadComposerSettings());
 	let composedNotes = $state<ComposedNote[]>([]);
@@ -127,6 +130,38 @@
 		currentPlaybackIndex = -1;
 	}
 
+	function changeSelectedPitch(direction: 1 | -1) {
+		if (!selectedNoteId) return;
+		const noteIndex = composedNotes.findIndex((n) => n.id === selectedNoteId);
+		if (noteIndex === -1) return;
+		const note = composedNotes[noteIndex];
+		const newPitch = shiftPitch(
+			composerSettings.staffMode,
+			note.staffPosition,
+			note.pitchZone,
+			direction
+		);
+		if (!newPitch) return;
+
+		composedNotes = composedNotes.map((n, i) =>
+			i === noteIndex
+				? {
+						...n,
+						staffPosition: newPitch.staffPosition,
+						pitchZone: newPitch.pitchZone,
+						frequency: newPitch.frequency,
+						noteName: newPitch.noteName,
+						colour: newPitch.colour
+					}
+				: n
+		);
+
+		if (composerSettings.playOnPlace && soundEnabled) {
+			ensureAudioContext();
+			playNoteForDuration(newPitch.frequency, waveform, 200);
+		}
+	}
+
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Delete' || e.key === 'Backspace') {
 			if (selectedNoteId) {
@@ -137,7 +172,50 @@
 		if (e.key === 'Escape') {
 			selectedNoteId = null;
 		}
+		if (e.key === 'ArrowUp' && selectedNoteId) {
+			e.preventDefault();
+			changeSelectedPitch(1);
+		}
+		if (e.key === 'ArrowDown' && selectedNoteId) {
+			e.preventDefault();
+			changeSelectedPitch(-1);
+		}
 	}
+
+	// When a piano key is played while a note is selected, update its pitch
+	function applyPianoNoteToSelected(pianoNote: NoteDefinition) {
+		if (!selectedNoteId) return;
+		if (composerSettings.staffMode !== 'full') return;
+		if (pianoNote.accidental !== '') return;
+
+		const pos = pianoNote.staffPosition;
+		if (pos < -2 || pos > 11) return;
+
+		const noteIdx = composedNotes.findIndex((n) => n.id === selectedNoteId);
+		if (noteIdx === -1) return;
+
+		const zone: PitchZone = pos <= 2 ? 'low' : pos <= 6 ? 'middle' : 'high';
+		composedNotes = composedNotes.map((n, i) =>
+			i === noteIdx
+				? {
+						...n,
+						staffPosition: pos,
+						pitchZone: zone,
+						frequency: pianoNote.frequency,
+						noteName: `${pianoNote.name}${pianoNote.octave}`,
+						colour: pianoNote.colour
+					}
+				: n
+		);
+	}
+
+	let lastHandledPianoEvent: typeof pianoNoteEvent = null;
+
+	$effect(() => {
+		if (!pianoNoteEvent || pianoNoteEvent === lastHandledPianoEvent) return;
+		lastHandledPianoEvent = pianoNoteEvent;
+		untrack(() => applyPianoNoteToSelected(pianoNoteEvent!.note));
+	});
 </script>
 
 <svelte:window onkeydown={handleKeydown} />
@@ -197,7 +275,7 @@
 		<!-- Contextual hint -->
 		<span class="toolbar-hint">
 			{#if selectedNoteId}
-				Press Delete to remove selected note
+				Play a key or &#x2191;&#x2193; to change pitch &middot; Delete to remove
 			{:else if composedNotes.length > 0}
 				Click a note to select it
 			{:else}

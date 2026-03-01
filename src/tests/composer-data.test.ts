@@ -5,6 +5,7 @@ import {
 	resolveFullStavePitch,
 	resolveThreeLinePitch,
 	resolveOneLinePitch,
+	shiftPitch,
 	DEFAULT_COMPOSER_SETTINGS,
 	STAFF_GEOMETRY,
 	yForStaffPosition,
@@ -190,6 +191,102 @@ describe('resolveOneLinePitch', () => {
 		expect(high.frequency).toBeGreaterThan(0);
 		expect(low.frequency).toBeGreaterThan(0);
 		expect(high.frequency).not.toBe(low.frequency);
+	});
+});
+
+describe('shiftPitch', () => {
+	describe('full stave mode', () => {
+		it('shifts E4 (position 0) up to F4 (position 1)', () => {
+			const result = shiftPitch('full', 0, 'low', 1);
+			expect(result).not.toBeNull();
+			expect(result!.staffPosition).toBe(1);
+			expect(result!.noteName).toBe('F4');
+		});
+
+		it('shifts F4 (position 1) down to E4 (position 0)', () => {
+			const result = shiftPitch('full', 1, 'low', -1);
+			expect(result).not.toBeNull();
+			expect(result!.staffPosition).toBe(0);
+			expect(result!.noteName).toBe('E4');
+		});
+
+		it('returns null when shifting below C4 (position -2)', () => {
+			const result = shiftPitch('full', -2, 'low', -1);
+			expect(result).toBeNull();
+		});
+
+		it('returns null when shifting above B5 (position 11)', () => {
+			const result = shiftPitch('full', 11, 'high', 1);
+			expect(result).toBeNull();
+		});
+
+		it('updates pitch zone when crossing boundary', () => {
+			// Position 2 is low, position 3 is middle
+			const result = shiftPitch('full', 2, 'low', 1);
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('middle');
+		});
+
+		it('returns a valid frequency', () => {
+			const result = shiftPitch('full', 0, 'low', 1);
+			expect(result!.frequency).toBeGreaterThan(0);
+		});
+	});
+
+	describe('three-line mode', () => {
+		it('shifts low up to middle', () => {
+			const result = shiftPitch('three-line', 0, 'low', 1);
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('middle');
+		});
+
+		it('shifts middle up to high', () => {
+			const result = shiftPitch('three-line', 1, 'middle', 1);
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('high');
+		});
+
+		it('shifts high down to middle', () => {
+			const result = shiftPitch('three-line', 2, 'high', -1);
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('middle');
+		});
+
+		it('returns null when shifting above high', () => {
+			const result = shiftPitch('three-line', 2, 'high', 1);
+			expect(result).toBeNull();
+		});
+
+		it('returns null when shifting below low', () => {
+			const result = shiftPitch('three-line', 0, 'low', -1);
+			expect(result).toBeNull();
+		});
+	});
+
+	describe('one-line mode', () => {
+		it('shifts low up to high', () => {
+			const result = shiftPitch('one-line', 0, 'low', 1);
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('high');
+			expect(result!.noteName).toBe('High');
+		});
+
+		it('shifts high down to low', () => {
+			const result = shiftPitch('one-line', 1, 'high', -1);
+			expect(result).not.toBeNull();
+			expect(result!.pitchZone).toBe('low');
+			expect(result!.noteName).toBe('Low');
+		});
+
+		it('returns null when shifting above high', () => {
+			const result = shiftPitch('one-line', 1, 'high', 1);
+			expect(result).toBeNull();
+		});
+
+		it('returns null when shifting below low', () => {
+			const result = shiftPitch('one-line', 0, 'low', -1);
+			expect(result).toBeNull();
+		});
 	});
 });
 

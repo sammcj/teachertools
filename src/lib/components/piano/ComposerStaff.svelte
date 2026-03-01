@@ -281,7 +281,7 @@
 	>
 		{#if staffMode === 'full'}
 			<!-- Treble clef -->
-			<g transform="translate(35, 68) scale(0.85)">
+			<g transform="translate(26, -9) scale(0.31)">
 				<path d={TREBLE_CLEF_PATH} fill="#374151" />
 			</g>
 
